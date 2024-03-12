@@ -19,6 +19,7 @@
 
 %% REVISIONS
 \AddRevision{0.1.0}{4 March 2024}{Initial prototype}
+\AddRevision{0.2.0}{10 March 2024}{Revised prototype}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -55,16 +56,16 @@
 \fullheader
 %\noheader
 
-\pagenumbering{arabic} 
+\pagenumbering{arabic}
 
 %\begin{comment}
 \section{Context}
 
-The purpose of this project is to develop an innovative solution that facilitates the integration of Operations Research (OR) libraries, such as Google OR Tools and Gecode, as a backend for Constraint Logic Programming (CLP) in Prolog. The primary goal is to create a web API that allows multiple users to access and utilize these OR libraries simultaneously. To achieve scalability and resource optimization, the web API will be deployed on a Kubernetes cluster.\\
+The purpose of this project is to develop an innovative solution that facilitates the integration of Operations Research (OR) libraries, such as Google OR Tools and Gecode, as a backend for Constraint Logic Programming (CLP) in Prolog. The primary goal is twofold. On the one side it is to create a Web API that allows multiple users to access and utilize these OR libraries simultaneously. On the other side it is to create Prolog client that connects to this API and uses it. To achieve scalability and resource optimization, the Web API will be deployed on a Kubernetes cluster.\\
 
-In a previous attempt to bridge the gap between Prolog and the Google OR Tools library, a project was initiated. However, this approach required the local installation of the library, presenting limitations in terms of accessibility. To overcome these challenges, our current initiative focuses on developing a web-based solution that eliminates the need for local installations, giving us an easy-to-use library for CLP in Prolog. This approach not only enhances accessibility but in addition promotes efficient utilization of resources, making it an ideal choice for collaborative and concurrent CLP programming tasks. The proposed architecture leverages the power of Kubernetes to provide a scalable and resilient environment for hosting the web API, making it well-suited for deployment in various operational scenarios.
+In a previous attempt to bridge the gap between Prolog and the Google OR Tools library, a project was initiated. However, this approach required the local installation of the library, presenting limitations in terms of accessibility. To overcome these challenges, our current initiative focuses on developing a Web-based solution that eliminates the need for local installations, giving us an easy-to-use library for CLP in Prolog. This approach not only enhances accessibility but in addition promotes efficient utilization of resources, making it an ideal choice for collaborative and concurrent CLP programming tasks. The proposed architecture leverages the power of Kubernetes to provide a scalable and resilient environment for hosting the Web API, making it well-suited for deployment in various operational scenarios.\\
 
-For the context of this project we will focus on the implementation of an API for the Google OR Tools library. In the future, the same approach could be extended to other OR libraries, such as Gecode.
+In the context of this project we will focus on the implementation of an API for the Google OR Tools library. In the future, the same approach could be extended to other OR libraries, such as Gecode.
 
 %\myFigure{vrp.svg}{width=0.6\textwidth}{Example of the VRP}{vrp}
 
@@ -75,13 +76,14 @@ For the context of this project we will focus on the implementation of an API fo
 The primary goals of this project are the following:
 
 \begin{itemize}
-    \item Implement a web API that provides access to the Google OR Tools library for Constraint Logic Programming in Prolog. The API should be designed to handle multiple concurrent requests and provide some scalability in case of increased usage in the future. An authentication mechanism should be implemented to ensure secure access to the API.
-    \item Deploy the web API on a Kubernetes cluster to ensure scalability and resilience. The deployment should be automated with the use of Gitlab CI/CD pipelines.
-    \item Develop a client library for Prolog that allows easy access to the web API. The client library should be usable in a similar way to other CLP libraries in Prolog, such as clpfd.
-    \item Perform a series of tests to ensure the reliability and performance of the web API. The tests should include unit tests and performance tests.
+    \item Implement a Web API that provides access to the Google OR Tools library for Constraint Logic Programming in Prolog. The API should be designed to handle multiple concurrent requests and provide some scalability in case of increased usage in the future. A token-based authentication mechanism should be implemented to ensure secure access to the API.
+    \item Deploy the Web API on a Kubernetes cluster to ensure scalability and resilience. The deployment should be automated with the use of Gitlab CI/CD pipelines.
+    \item Develop a client library for SWI-Prolog that allows easy access to the Web API. The client library should be usable in a way similar to other CLP libraries in Prolog, such as clpfd.
+    \item Perform a series of tests to ensure the reliability and performance of the Web API. The tests should include unit tests and performance tests.
+    \item A series of demonstration programms should be implemented to showcase the capabilities of the Web API and the client library.
 \end{itemize}
 
-If the planned tasks are completed faster than expected, the addition of a second OR library, such as Gecode, to the web API could be considered. Alternatively the use of more features of the Google OR Tools library could be implemented.
+If the planned tasks are completed faster than expected, the addition of a second OR library, such as Gecode, to the Web API could be considered. Alternatively the use of more features of the Google OR Tools library could be implemented. Another option would be to implement a client in a different programming language, such as Java.
 
 \clearpage
 
@@ -90,13 +92,15 @@ If the planned tasks are completed faster than expected, the addition of a secon
 To achieve the above-mentioned goals the following tasks need to be carried out:
 
 \begin{itemize}
-    \item Analysis of possible architecture for the web API and the client library.
-    \item Implementation of basic endpoints for the web API to have a basic working prototype.
+    \item Analysis of possible architecture for the Web API and the client library.
+    \item Design of the Web API and the client library.
+    \item Design of the client library for Prolog and demonstration programms. 
+    \item Implementation of basic endpoints for the Web API to have a basic working prototype.
     \item Implementation of the client library for Prolog.
-    \item Implementation of the remaining endpoints for the web API.
-    \item Implementation of the authentication mechanism for the web API.
-    \item Deployment of the web API on a Kubernetes cluster and Gitlab CI/CD pipeline setup.
-    \item Performance testing of the web API.
+    \item Implementation of the remaining endpoints for the Web API.
+    \item Implementation of the authentication mechanism for the Web API.
+    \item Deployment of the Web API on a Kubernetes cluster and Gitlab CI/CD pipeline setup.
+    \item Performance testing of the Web API.
 \end{itemize}
 
 \section{Planning}   
@@ -104,12 +108,12 @@ To achieve the above-mentioned goals the following tasks need to be carried out:
 See next page.
 
 % remove header & footer
-%\fancyhf{}
-%\renewcommand{\headrulewidth}{0pt}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
 
-%\begin{sidewaysfigure}
-%    \myFigure{planning.png}{width=\textwidth}{Gantt diagram of the planning}{planning}
-%\end{sidewaysfigure}
+\begin{sidewaysfigure}
+   \myFigure{gantt.png}{width=\textwidth}{Gantt diagram of the planning}{planning}
+\end{sidewaysfigure}
 
 \printglossary[type=\acronymtype]
 \printglossary
