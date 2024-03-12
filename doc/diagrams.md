@@ -28,8 +28,8 @@ gantt
     Final presentation        : milestone, m2, 22.05.2024, 4h
 
     section Report
-        Specification    : d1, 21.02.2024, 14d
-        Write the report :                 47d
+        Specification    : d1, 21.02.2024, 10d
+        Write the report :                 51d
     section Tasks
         Analysis of API architecture         : a1,        06.03.2024, 10d
         Design API                           :                        5d
