@@ -1,0 +1,79 @@
+{
+    "solverType": "SOLVER_TYPE_GSCIP",
+    "model": {
+        "name": "my_model",
+        "variables": {
+            "ids": [
+                "0",
+                "1"
+            ],
+            "lowerBounds": [
+                0.0,
+                0.0
+            ],
+            "upperBounds": [
+                1.0,
+                2.5
+            ],
+            "integers": [
+                true,
+                false
+            ],
+            "names": [
+                "x",
+                "y"
+            ]
+        },
+        "objective": {
+            "maximize": true,
+            "linearCoefficients": {
+                "ids": [
+                    "0",
+                    "1"
+                ],
+                "values": [
+                    2.0,
+                    1.0
+                ]
+            }
+        },
+        "linearConstraints": {
+            "ids": [
+                "0",
+                "1"
+            ],
+            "lowerBounds": [
+                "-Infinity",
+                -13.0
+            ],
+            "upperBounds": [
+                1.5,
+                "Infinity"
+            ],
+            "names": [
+                "c",
+                "c"
+            ]
+        },
+        "linearConstraintMatrix": {
+            "rowIds": [
+                "0",
+                "0",
+                "1",
+                "1"
+            ],
+            "columnIds": [
+                "0",
+                "1",
+                "0",
+                "1"
+            ],
+            "coefficients": [
+                1.0,
+                1.0,
+                2.0,
+                1.0
+            ]
+        }
+    }
+}

@@ -1,21 +1,4 @@
 % :- include('remote-clp.pl').
-:- op(760, yfx, ~#<==>).
-:- op(750, xfy, ~#==>).
-:- op(750, yfx, ~#<==).
-:- op(740, yfx, ~#\/).
-:- op(730, yfx, ~#\).
-:- op(720, yfx, ~#/\).
-:- op(710,  fy, ~#\).
-:- op(700, xfx, ~#>).
-:- op(700, xfx, ~#<).
-:- op(700, xfx, ~#>=).
-:- op(700, xfx, ~#=<).
-:- op(700, xfx, ~#=).
-:- op(700, xfx, ~#\=).
-% :- op(700, xfx, in).
-% :- op(700, xfx, ins).
-% :- op(450, xfx, ..). % should bind more tightly than \/
-% :- op(150, fx, #).
 
 pyth_triplets(N,Ls1) :- 
     Ls1 = [A1,B1,C],
@@ -50,15 +33,3 @@ optimizeDemo(A,B) :-
           A+B ~#< 50,
         4*A-B ~#< 88,
         rclp_fd_maximize(rclp_fd_labeling([A,B]), Z).
-
-parse(E, E) :- \+ compound(E).
-parse(E, Res) :-
-    E =.. [Op, A, B],
-    parse(A, ResA),
-    parse(B, ResB),
-    Res = [Op, ResA, ResB].
-
-module(rclp).
-
-attr_unify_hook(M, E) :- 
-    writeln(M), writeln(E).
