@@ -20,6 +20,7 @@
 %% REVISIONS
 \AddRevision{0.1.0}{4 March 2024}{Initial prototype}
 \AddRevision{0.2.0}{10 March 2024}{Revised prototype}
+\AddRevision{1.0.0}{17 March 2024}{Final version}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -76,14 +77,14 @@ In the context of this project we will focus on the implementation of an API for
 The primary goals of this project are the following:
 
 \begin{itemize}
-    \item Implement a Web API that provides access to the Google OR Tools library for Constraint Logic Programming in Prolog. The API should be designed to handle multiple concurrent requests and provide some scalability in case of increased usage in the future. A token-based authentication mechanism should be implemented to ensure secure access to the API.
+    \item Implement a Web API that provides access to part of the CP-SAT solver of the Google OR Tools library for Constraint Logic Programming in Prolog. The API should be designed to handle multiple concurrent requests and provide some scalability in case of increased usage in the future. A token-based authentication mechanism should be implemented to ensure secure access to the API.
     \item Deploy the Web API on a Kubernetes cluster to ensure scalability and resilience. The deployment should be automated with the use of Gitlab CI/CD pipelines.
-    \item Develop a client library for SWI-Prolog that allows easy access to the Web API. The client library should be usable in a way similar to other CLP libraries in Prolog, such as clpfd.
+    \item Develop an OS independent client library for SWI-Prolog that allows easy access to the Web API. The client library should be usable in a way similar to other CLP libraries in Prolog, such as clpfd.
     \item Perform a series of tests to ensure the reliability and performance of the Web API. The tests should include unit tests and performance tests.
-    \item A series of demonstration programms should be implemented to showcase the capabilities of the Web API and the client library.
+    \item A series of demonstration programs should be implemented to showcase the capabilities of the Web API and the client library.
 \end{itemize}
 
-If the planned tasks are completed faster than expected, the addition of a second OR library, such as Gecode, to the Web API could be considered. Alternatively the use of more features of the Google OR Tools library could be implemented. Another option would be to implement a client in a different programming language, such as Java.
+If the planned tasks are completed faster than expected, the addition of a second OR library, such as Gecode, to the Web API could be considered. Alternatively the use of more features of the Google OR Tools library could be implemented. Another option would be to implement a client in a different programming language, such as Java. Another possible extension would be to implement the client library for other Prolog systems, such as GNU Prolog.
 
 \clearpage
 
@@ -94,8 +95,8 @@ To achieve the above-mentioned goals the following tasks need to be carried out:
 \begin{itemize}
     \item Analysis of possible architecture for the Web API and the client library.
     \item Design of the Web API and the client library.
-    \item Design of the client library for Prolog and demonstration programms. 
-    \item Implementation of basic endpoints for the Web API to have a basic working prototype.
+    \item Design of the client library for Prolog and demonstration programs. 
+    \item Implementation of basic endpoints for the Web API to have a basic working API.
     \item Implementation of the client library for Prolog.
     \item Implementation of the remaining endpoints for the Web API.
     \item Implementation of the authentication mechanism for the Web API.
