@@ -1,0 +1,17 @@
+aiexplorer:
+  type: Web
+  title: Google Gemini VS Chatgpt Le guide comparatif
+  date: 2024-02-21
+  author: AIExplorer
+  url: 
+    value: https://aiexplorer.io/guides-ia/google-gemini-vs-chatgpt-le-guide-comparatif/
+    date: 2024-02-28
+    
+frontend:
+  type: Web
+  title: Best Frontend Frameworks for Web Development
+  date: 2024-01
+  author: Hiren Dhaduk
+  url:
+    value: https://www.simform.com/blog/best-frontend-frameworks/
+    date: 2024-03-07

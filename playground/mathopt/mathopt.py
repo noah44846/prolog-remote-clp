@@ -37,7 +37,7 @@ def request_example() -> None:
     x = model.add_binary_variable(name="x")
     y = model.add_variable(lb=0.0, ub=2.5, name="y")
     model.add_linear_constraint(x + y <= 1.5, name="c")
-    model.add_linear_constraint(2*x + y >= -13, name="c")
+    model.add_linear_constraint(2*x + y >= -13, name="d")
     model.maximize(2 * x + y)
     try:
         print(json.dumps(remote_http_solve._build_json_payload(model, mathopt.SolverType.GSCIP, None, None)))
