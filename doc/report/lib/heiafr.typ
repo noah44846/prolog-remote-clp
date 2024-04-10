@@ -17,6 +17,14 @@
 
 #let heading_text(..content) = text(font: "New Computer Modern", ..content)
 
+#let code_block(code) = block(
+  fill: luma(250),
+  inset: 10pt,
+  stroke: 1pt + luma(220),
+  radius: 5pt,
+  code,
+)
+
 //
 // Report
 //
@@ -205,6 +213,9 @@
 
   // Style
   show link: underline
+
+  // Add custom syntax highlighting
+  set raw(syntaxes: "syntaxes/SWI-Prolog.sublime-syntax") 
 
   doc
 

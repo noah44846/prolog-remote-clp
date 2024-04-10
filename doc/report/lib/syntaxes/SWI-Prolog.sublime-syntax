@@ -1,0 +1,1363 @@
+# Generated from https://github.com/BenjaminSchaaf/swi-prolog-sublime-syntax using https://github.com/BenjaminSchaaf/sbnf sbnfc@0.4.0
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/syntax.html
+version: 2
+name: SWI-Prolog
+file_extensions:
+  - pl
+  - pro
+first_line_match: '^#!.*\bswipl\b'
+scope: source.swi-prolog
+contexts:
+  # Meta scope context for atom-entity
+  atom-entity|meta:
+    - meta_content_scope: entity.name.predicate.swi-prolog
+    - match: ''
+      pop: true
+  # Meta scope context for atom-functor
+  atom-functor|meta:
+    - meta_content_scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+    - match: ''
+      pop: true
+  # Rule: atom-string
+  atom-string|0:
+    - meta_include_prototype: false
+    - match: '\\([abcefnrstv''\"`\n\\]|x\h\h+\\?|u\h{4}|U\h{8})'
+      scope: constant.character.escape.swi-prolog
+    - match: ''''
+      pop: true
+  # Rule: compound-term
+  compound-term|0:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [compound-term|1, value-without-comma|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [compound-term|1, value-without-comma|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [compound-term|1, value-without-comma|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: [compound-term|1, value-without-comma|0]
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [compound-term|1, value-without-comma|0]
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [compound-term|1, value-without-comma|0]
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [compound-term|1, value-without-comma|0]
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: [compound-term|1, value-without-comma|0]
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: [compound-term|1, value-without-comma|0]
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [compound-term|1, value-without-comma|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: [compound-term|1, value-without-comma|0]
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: [compound-term|1, value-without-comma|0]
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [compound-term|1, value-without-comma|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [compound-term|1, value-without-comma|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [compound-term|1, value-without-comma|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [compound-term|1, value-without-comma|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [compound-term|1, value-without-comma|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [compound-term|1, value-without-comma|0, single-value|2]
+    - match: '\)'
+      scope: punctuation.section.parens.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: compound-term
+  compound-term|1:
+    - match: ','
+      scope: punctuation.separator.sequence.swi-prolog
+      push: compound-term|2
+    - match: '\)'
+      scope: punctuation.section.parens.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: compound-term
+  compound-term|2:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [value-without-comma|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [value-without-comma|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [value-without-comma|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: value-without-comma|0
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: value-without-comma|0
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: value-without-comma|0
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [value-without-comma|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: value-without-comma|0
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: value-without-comma|0
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [value-without-comma|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [value-without-comma|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [value-without-comma|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [value-without-comma|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [value-without-comma|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [value-without-comma|0, single-value|2]
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: fact
+  fact|0:
+    - match: ':-'
+      scope: keyword.operator.definition.begin.swi-prolog
+      set: fact|1
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [fact|2, value|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [fact|2, value|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [fact|2, value|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: [fact|2, value|0]
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [fact|2, value|0]
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [fact|2, value|0]
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [fact|2, value|0]
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: [fact|2, value|0]
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: [fact|2, value|0]
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [fact|2, value|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: [fact|2, value|0]
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: [fact|2, value|0]
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [fact|2, value|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [fact|2, value|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [fact|2, value|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [fact|2, value|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [fact|2, value|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [fact|2, value|0, single-value|2]
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: fact
+  fact|1:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [fact|2, value|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [fact|2, value|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [fact|2, value|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: [fact|2, value|0]
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [fact|2, value|0]
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [fact|2, value|0]
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [fact|2, value|0]
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: [fact|2, value|0]
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: [fact|2, value|0]
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [fact|2, value|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: [fact|2, value|0]
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: [fact|2, value|0]
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [fact|2, value|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [fact|2, value|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [fact|2, value|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [fact|2, value|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [fact|2, value|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [fact|2, value|0, single-value|2]
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: fact
+  fact|2:
+    - match: '\.'
+      scope: keyword.operator.definition.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: list
+  list|0:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [list|1, value-without-comma|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [list|1, value-without-comma|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [list|1, value-without-comma|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: [list|1, value-without-comma|0]
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [list|1, value-without-comma|0]
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [list|1, value-without-comma|0]
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [list|1, value-without-comma|0]
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: [list|1, value-without-comma|0]
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: [list|1, value-without-comma|0]
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [list|1, value-without-comma|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: [list|1, value-without-comma|0]
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: [list|1, value-without-comma|0]
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [list|1, value-without-comma|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [list|1, value-without-comma|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [list|1, value-without-comma|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [list|1, value-without-comma|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [list|1, value-without-comma|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [list|1, value-without-comma|0, single-value|2]
+    - match: '\]'
+      scope: punctuation.section.brackets.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: list
+  list|1:
+    - match: ','
+      scope: punctuation.separator.sequence.swi-prolog
+      push: list|2
+    - match: '\|'
+      scope: punctuation.separator.sequence.swi-prolog
+      set: list|3
+    - match: '\]'
+      scope: punctuation.section.brackets.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: list
+  list|2:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [value-without-comma|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [value-without-comma|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [value-without-comma|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: value-without-comma|0
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: value-without-comma|0
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: value-without-comma|0
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [value-without-comma|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: value-without-comma|0
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: value-without-comma|0
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [value-without-comma|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [value-without-comma|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [value-without-comma|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [value-without-comma|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [value-without-comma|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [value-without-comma|0, single-value|2]
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: list
+  list|3:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [list|4, value-without-comma|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [list|4, value-without-comma|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [list|4, value-without-comma|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: [list|4, value-without-comma|0]
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [list|4, value-without-comma|0]
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [list|4, value-without-comma|0]
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [list|4, value-without-comma|0]
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: [list|4, value-without-comma|0]
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: [list|4, value-without-comma|0]
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [list|4, value-without-comma|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: [list|4, value-without-comma|0]
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: [list|4, value-without-comma|0]
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [list|4, value-without-comma|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [list|4, value-without-comma|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [list|4, value-without-comma|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [list|4, value-without-comma|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [list|4, value-without-comma|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [list|4, value-without-comma|0, single-value|2]
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: list
+  list|4:
+    - match: '\]'
+      scope: punctuation.section.brackets.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: main
+  main:
+    - match: '^#!'
+      scope: comment.line.number-sign.swi-prolog punctuation.definition.comment.number-sign.swi-prolog
+      push: shebang|0
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: entity.name.predicate.swi-prolog
+      push: rule|0
+    - match: ''''
+      scope: entity.name.predicate.swi-prolog
+      push: [rule|0, atom-entity|meta, atom-string|0]
+    - match: '(?=\S)'
+      push: fact|0
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+  # Rule: multi-line-comment['SWI']
+  multi-line-comment@WydTV0knXQ|0:
+    - meta_content_scope: comment.block.nested.swi-prolog
+    - match: '/\*(\*(?!/))?'
+      scope: comment.block.nested.swi-prolog comment.block.nested.swi-prolog punctuation.definition.comment.swi-prolog
+      push: [multi-line-comment@WydTV0knXQ|meta, multi-line-comment@WydTV0knXQ|0]
+    - match: '\*/'
+      scope: comment.block.nested.swi-prolog punctuation.definition.comment.swi-prolog
+      pop: true
+  # Meta scope context for multi-line-comment['SWI']
+  multi-line-comment@WydTV0knXQ|meta:
+    - meta_content_scope: comment.block.nested.swi-prolog
+    - match: ''
+      pop: true
+  # Rule: number
+  number|0:
+    - match: '[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+    - match: '(?=\S)'
+      pop: true
+  # Rule: operator-compound-term
+  operator-compound-term|0:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0]
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0]
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0]
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0]
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0]
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0]
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0]
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0]
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [operator-compound-term|1, value-without-comma|0, single-value|2]
+    - match: '\)'
+      scope: punctuation.section.parans.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: operator-compound-term
+  operator-compound-term|1:
+    - match: ','
+      scope: punctuation.separator.sequence.swi-prolog
+      push: operator-compound-term|2
+    - match: '\)'
+      scope: punctuation.section.parans.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: operator-compound-term
+  operator-compound-term|2:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [value-without-comma|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [value-without-comma|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [value-without-comma|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: value-without-comma|0
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: value-without-comma|0
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: value-without-comma|0
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [value-without-comma|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: value-without-comma|0
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: value-without-comma|0
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [value-without-comma|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [value-without-comma|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [value-without-comma|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [value-without-comma|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [value-without-comma|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [value-without-comma|0, single-value|2]
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: prototype
+  prototype:
+    - match: '(%+).*\n?'
+      scope: comment.line.percentage.swi-prolog
+      captures:
+        1: punctuation.definition.comment.swi-prolog
+    - match: '/\*(\*(?!/))?'
+      scope: comment.block.nested.swi-prolog punctuation.definition.comment.swi-prolog
+      push: multi-line-comment@WydTV0knXQ|0
+  # Rule: rule
+  rule|0:
+    - match: '\('
+      scope: punctuation.section.parens.begin.swi-prolog
+      set: [rule|1, compound-term|0]
+    - match: ':-'
+      scope: keyword.operator.definition.begin.swi-prolog
+      set: rule|2
+    - match: '\.'
+      scope: keyword.operator.definition.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: rule
+  rule|1:
+    - match: ':-'
+      scope: keyword.operator.definition.begin.swi-prolog
+      set: rule|2
+    - match: '\.'
+      scope: keyword.operator.definition.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: rule
+  rule|2:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [rule|3, value|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [rule|3, value|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [rule|3, value|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: [rule|3, value|0]
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [rule|3, value|0]
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [rule|3, value|0]
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [rule|3, value|0]
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: [rule|3, value|0]
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: [rule|3, value|0]
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [rule|3, value|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: [rule|3, value|0]
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: [rule|3, value|0]
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [rule|3, value|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [rule|3, value|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [rule|3, value|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [rule|3, value|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [rule|3, value|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [rule|3, value|0, single-value|2]
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: rule
+  rule|3:
+    - match: '\.'
+      scope: keyword.operator.definition.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: set
+  set|0:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [set|1, value-without-comma|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [set|1, value-without-comma|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [set|1, value-without-comma|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: [set|1, value-without-comma|0]
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [set|1, value-without-comma|0]
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [set|1, value-without-comma|0]
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [set|1, value-without-comma|0]
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: [set|1, value-without-comma|0]
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: [set|1, value-without-comma|0]
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [set|1, value-without-comma|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: [set|1, value-without-comma|0]
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: [set|1, value-without-comma|0]
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [set|1, value-without-comma|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [set|1, value-without-comma|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [set|1, value-without-comma|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [set|1, value-without-comma|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [set|1, value-without-comma|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [set|1, value-without-comma|0, single-value|2]
+    - match: '\}'
+      scope: punctuation.section.braces.begin.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: set
+  set|1:
+    - match: ','
+      scope: punctuation.separator.sequence.swi-prolog
+      push: set|2
+    - match: '\}'
+      scope: punctuation.section.braces.begin.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: set
+  set|2:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [value-without-comma|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [value-without-comma|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [value-without-comma|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: value-without-comma|0
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: value-without-comma|0
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: value-without-comma|0
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: value-without-comma|0
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [value-without-comma|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: value-without-comma|0
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: value-without-comma|0
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [value-without-comma|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [value-without-comma|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [value-without-comma|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [value-without-comma|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [value-without-comma|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [value-without-comma|0, single-value|2]
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: shebang
+  shebang|0:
+    - meta_content_scope: comment.line.number-sign.swi-prolog
+    - match: '$\n?'
+      scope: comment.line.number-sign.swi-prolog
+      pop: true
+  # Rule: single-value
+  single-value|0:
+    - match: '\('
+      scope: punctuation.section.parens.begin.swi-prolog
+      set: compound-term|0
+    - match: '(?=\S)'
+      pop: true
+  # Rule: single-value
+  single-value|1:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: single-value|0
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: operator-compound-term|0
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      pop: true
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      pop: true
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      pop: true
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      pop: true
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      pop: true
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      pop: true
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: number|0
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      pop: true
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      pop: true
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: string|0
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: list|0
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: set|0
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: single-value|1
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: single-value|1
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: single-value|2
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: single-value
+  single-value|2:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [single-value|3, value|0, single-value|0]
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [single-value|3, value|0, single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: [single-value|3, value|0, operator-compound-term|0]
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      set: [single-value|3, value|0]
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [single-value|3, value|0]
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [single-value|3, value|0]
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      set: [single-value|3, value|0]
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      set: [single-value|3, value|0]
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      set: [single-value|3, value|0]
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: [single-value|3, value|0, number|0]
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      set: [single-value|3, value|0]
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      set: [single-value|3, value|0]
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: [single-value|3, value|0, string|0]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: [single-value|3, value|0, list|0]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: [single-value|3, value|0, set|0]
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: [single-value|3, value|0, single-value|1]
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: [single-value|3, value|0, single-value|1]
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: [single-value|3, value|0, single-value|2]
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: single-value
+  single-value|3:
+    - match: '\)'
+      scope: punctuation.section.group.end.swi-prolog
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: string
+  string|0:
+    - meta_content_scope: meta.string.swi-prolog string.quoted.double.swi-prolog
+    - meta_include_prototype: false
+    - match: '\\([abcefnrstv''\"`\n\\]|x\h\h+\\?|u\h{4}|U\h{8})'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog constant.character.escape.swi-prolog
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.end.swi-prolog
+      pop: true
+  # Rule: value-without-comma
+  value-without-comma|0:
+    - match: '\bis\b|>>|\^|=\.\.|=?<|>=?|==?|\*\*?|\+|->?|/|#=|\\='
+      scope: keyword.operator.swi-prolog
+      push: value-without-comma|1
+    - match: ';'
+      scope: keyword.operator.logical.or.swi-prolog
+      push: value-without-comma|1
+    - match: '->'
+      scope: keyword.operator.logical.if.swi-prolog
+      push: value-without-comma|1
+    - match: '(?=\S)'
+      pop: true
+  # Rule: value-without-comma
+  value-without-comma|1:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: single-value|0
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: operator-compound-term|0
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      pop: true
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      pop: true
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      pop: true
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      pop: true
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      pop: true
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      pop: true
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: number|0
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      pop: true
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      pop: true
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: string|0
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: list|0
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: set|0
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: single-value|1
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: single-value|1
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: single-value|2
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true
+  # Rule: value
+  value|0:
+    - match: '\bis\b|>>|\^|=\.\.|=?<|>=?|==?|\*\*?|\+|->?|/|#=|\\='
+      scope: keyword.operator.swi-prolog
+      push: value|1
+    - match: ';'
+      scope: keyword.operator.logical.or.swi-prolog
+      push: value|1
+    - match: '->'
+      scope: keyword.operator.logical.if.swi-prolog
+      push: value|1
+    - match: ','
+      scope: keyword.operator.logical.and.swi-prolog
+      push: value|1
+    - match: '(?=\S)'
+      pop: true
+  # Rule: value
+  value|1:
+    - match: '\b[a-z][[:alpha:]0-9_]*\b'
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: single-value|0
+    - match: ''''
+      scope: meta.path.swi-prolog variable.function.functor.swi-prolog
+      set: [single-value|0, atom-functor|meta, atom-string|0]
+    - match: '([~^&*\-+=|\\/<>][~^&*\-+=|\\/<>.,]*)(\()'
+      captures:
+        1: constant.character.swi-prolog.swi-prolog
+        2: punctuation.section.parens.begin.swi-prolog
+      set: operator-compound-term|0
+    - match: '!'
+      scope: keyword.control.cut.swi-prolog
+      pop: true
+    - match: '(0b)[01_]+'
+      scope: constant.numeric.integer.binary.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      pop: true
+    - match: '(0x)[\h_]+'
+      scope: constant.numeric.integer.hexadecimal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      pop: true
+    - match: '(0o)[0-7_]+'
+      scope: constant.numeric.integer.octal.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+      pop: true
+    - match: '([0-9]{1,2})('')[0-9a-z]+'
+      scope: constant.numeric.integer.swi-prolog
+      captures:
+        1: punctuation.definition.number.base.swi-prolog
+        2: punctuation.separator.base.swi-prolog
+      pop: true
+    - match: '[0-9]+\.[0-9]+'
+      scope: constant.numeric.float.swi-prolog
+      pop: true
+    - match: '[+-]?[0-9_]+'
+      scope: constant.numeric.integer.swi-prolog
+      set: number|0
+    - match: '\b[A-Z][[:alpha:]0-9_]*\b|\b_[[:alpha:]0-9_]+\b'
+      scope: variable.parameter.swi-prolog
+      pop: true
+    - match: '_'
+      scope: language.constant.underscore.swi-prolog
+      pop: true
+    - match: '"'
+      scope: meta.string.swi-prolog string.quoted.double.swi-prolog punctuation.definition.string.begin.swi-prolog
+      set: string|0
+    - match: '\['
+      scope: punctuation.section.brackets.begin.swi-prolog
+      set: list|0
+    - match: '\{'
+      scope: punctuation.section.braces.begin.swi-prolog
+      set: set|0
+    - match: '\+|-'
+      scope: keyword.operator.arithmetic.swi-prolog
+      set: single-value|1
+    - match: '\\\+'
+      scope: keyword.control.negation.swi-prolog
+      set: single-value|1
+    - match: '\('
+      scope: punctuation.section.group.begin.swi-prolog
+      set: single-value|2
+    - match: '\S'
+      scope: invalid.illegal.swi-prolog
+      pop: true

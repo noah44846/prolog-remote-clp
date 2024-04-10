@@ -9,7 +9,7 @@
 // d'architecture de Fribourg
 // ---------------------------------------------------------------------------
 
-#import "lib/heiafr.typ": report
+#import "lib/heiafr.typ": report, code_block
 #import "@preview/big-todo:0.2.0": *
 #import "@preview/tablex:0.0.8": tablex, hlinex, vlinex
 
@@ -48,7 +48,6 @@
 )
 
 = Introduction
-<intro>
 
 This report presents the activities carried out during the semester 6 project of the Software Engineering Bachelor programme at the School of Engineering and Architecture of Fribourg. The next section provides an overview of the project. For further details, please refer to the specification. The project repository is located at the following URL.
 
@@ -125,52 +124,61 @@ MathOpt provides a Web API that allows to solve optimization problems remotely o
 
 The usage of the remote API is quite simple. The user creates a problem, sets the variables and constraints as usual. To send it to the remote service, the user must call a remote solve function that takes an API key and the model object. The function returns the solution object.
 
-The model object is parsed to JSON so it can be sent to the API. The following python code shows how this works.
+The model object is parsed to JSON so it can be sent to the API. @lst:mathopt_python_model python code shows how this works.
 
-```python
-model = mathopt.Model(name="my_model")
-x = model.add_binary_variable(name="x")
-y = model.add_variable(lb=0.0, ub=2.5, name="y")
-model.add_linear_constraint(x + y <= 1.5, name="c")
-model.add_linear_constraint(2*x + y >= -13, name="d")
-model.maximize(2 * x + y)
-```
+#figure(
+    code_block[```python
+    model = mathopt.Model(name="my_model")
+    x = model.add_binary_variable(name="x")
+    y = model.add_variable(lb=0.0, ub=2.5, name="y")
+    model.add_linear_constraint(x + y <= 1.5, name="c")
+    model.add_linear_constraint(2*x + y >= -13, name="d")
+    model.maximize(2 * x + y)
+    result, logs = remote_http_solve.remote_http_solve(
+        model, mathopt.SolverType.GSCIP, api_key=api_key
+    )
+    ```],
+    caption: [Python code to create a MathOpt model],
+) <lst:mathopt_python_model>
 
-The code above creates a model with two variables, x and y, and two constraints, c and d. The model is then sent to the remote service and the solution is returned. The following JSON is sent to the service.
+The code above creates a model with two variables, x and y, and two constraints, c and d. The model is then sent to the remote service and the solution is returned. @lst:mathopt_json_model shows the JSON representation of the model.
 
-```json
-{
-    "solverType": "SOLVER_TYPE_GSCIP",
-    "model": {
-        "name": "my_model",
-        "variables": {
-            "ids": [ "0", "1" ],
-            "lowerBounds": [ 0.0, 0.0 ],
-            "upperBounds": [ 1.0, 2.5 ],
-            "integers": [ true, false ],
-            "names": [ "x", "y" ]
-        },
-        "objective": {
-            "maximize": true,
-            "linearCoefficients": {
+#figure(
+    code_block[```json
+    {
+        "solverType": "SOLVER_TYPE_GSCIP",
+        "model": {
+            "name": "my_model",
+            "variables": {
                 "ids": [ "0", "1" ],
-                "values": [ 2.0, 1.0 ]
+                "lowerBounds": [ 0.0, 0.0 ],
+                "upperBounds": [ 1.0, 2.5 ],
+                "integers": [ true, false ],
+                "names": [ "x", "y" ]
+            },
+            "objective": {
+                "maximize": true,
+                "linearCoefficients": {
+                    "ids": [ "0", "1" ],
+                    "values": [ 2.0, 1.0 ]
+                }
+            },
+            "linearConstraints": {
+                "ids": [ "0", "1" ],
+                "lowerBounds": [ "-Infinity", -13.0 ],
+                "upperBounds": [ 1.5, "Infinity" ],
+                "names": [ "c", "d" ]
+            },
+            "linearConstraintMatrix": {
+                "rowIds": [ "0", "0", "1", "1" ],
+                "columnIds": [ "0", "1", "0", "1" ],
+                "coefficients": [ 1.0, 1.0, 2.0, 1.0 ]
             }
-        },
-        "linearConstraints": {
-            "ids": [ "0", "1" ],
-            "lowerBounds": [ "-Infinity", -13.0 ],
-            "upperBounds": [ 1.5, "Infinity" ],
-            "names": [ "c", "d" ]
-        },
-        "linearConstraintMatrix": {
-            "rowIds": [ "0", "0", "1", "1" ],
-            "columnIds": [ "0", "1", "0", "1" ],
-            "coefficients": [ 1.0, 1.0, 2.0, 1.0 ]
         }
     }
-}
-```
+    ```],
+    caption: [JSON representation of a MathOpt model],
+) <lst:mathopt_json_model>
 
 == Long running requests in Prolog
 
@@ -178,134 +186,144 @@ Since the solving of constraint logic programming problems can be quite compute 
 
 Handleing this with a simple blocking request would not be a good idea. The connection could be lost or the client could timeout. To handle this, the service must be able to handle long running requests in a non-blocking way.
 
-The RESTful way to handle this is to return a 202 Accepted status code with a location header that points to a status endpoint. The client can then poll this endpoint to get the status of the request. When the request is finished, the status endpoint will return a 200 OK status code with the location of the result. The figure below shows how this works.
+The RESTful way to handle this is to return a 202 Accepted status code with a location header that points to a status endpoint. The client can then poll this endpoint to get the status of the request. When the request is finished, the status endpoint will return a 200 OK status code with the location of the result. @img:long_running_api below shows how this works.
 
 #figure(
   image("img/Long-Running-API.png", width: 70%),
   caption: [Long running requests in a RESTful API],
-) <img_long_running_api>
+) <img:long_running_api>
 
 On the Prolog side, the client library must be able to handle this. The client must be able to send a request and poll the status endpoint until the request is finished. When the request is finished, the client must be able to get the result.
 
-SWI-Prolog has built-in libraries to handle HTTP requests, JSON parsing and serialization and threading. This makes it quite easy to implement this in Prolog. Here is an example of how the client library could look with a small example node.js server.
+SWI-Prolog has built-in libraries to handle HTTP requests, JSON parsing and serialization and threading. This makes it quite easy to implement this in Prolog. @lst:long_running_server shows a Node.js server that simulates a long running request.
 
-A node.js server that simulates a long running request.
+#figure(
+    code_block[```js
+    var http = require('http');
 
-```js
-var http = require('http');
+    var value = 0;
 
-var value = 0;
-
-http.createServer((req, res) => {
-    if (req.url === '/solve') {
-        setTimeout(() => { value = 42; }, 5000);
-        res.writeHead(202);
-        res.end();
-        return;
-    } else if (req.url === '/status') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(value > 0));
-        return;
-    } else if (req.url === '/value') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(value));
-        return;
-    }
-}).listen(3000);
-```
+    http.createServer((req, res) => {
+        if (req.url === '/solve') {
+            setTimeout(() => { value = 42; }, 5000);
+            res.writeHead(202);
+            res.end();
+            return;
+        } else if (req.url === '/status') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(value > 0));
+            return;
+        } else if (req.url === '/value') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(value));
+            return;
+        }
+    }).listen(3000);
+    ```],
+    caption: [Node.js server that simulates a long running request],
+) <lst:long_running_server>
 
 A Prolog client that polls the status endpoint until the request is finished.
+#figure(
+    code_block[```swi-prolog
+    :- use_module(library(http/http_open)).
+    :- use_module(library(http/json)).
 
+    check :-
+        http_open('http://localhost:3000/status', In, []),
+        json_read(In, Json, [true(t), false(f)]),
+        close(In),
+        get_time(T),
+        write('status: '), write(Json), write(' '), writeln(T),
+        Json = t.
 
-```prolog
-:- use_module(library(http/http_open)).
-:- use_module(library(http/json)).
+    polling :-
+        write('Starting'), nl,
+        http_open('http://localhost:3000/solve', In, []),
+        close(In),
+        % poll the status endpoint until the request is finished
+        thread_wait(check, [retry_every(1)]),
+        write('Fetching result'), nl,
+        http_open('http://localhost:3000/value', In2, []),
+        json_read(In2, Json),
+        close(In2),
+        writeln(Json).
+    ```],
+    caption: [Prolog client that polls the status endpoint],
+) <lst:long_running_prolog>
 
-check :-
-    http_open('http://localhost:3000/status', In, []),
-    json_read(In, Json, [true(t), false(f)]),
-    close(In),
-    write('status: '), write(Json), write(' '), get_time(T), write(T), nl,
-    Json = t.
+The output of the Prolog client is shown in @lst:long_running_prolog_output.
 
-polling :-
-    write('Starting'), nl,
-    http_open('http://localhost:3000/solve', In, []),
-    close(In),
-    % poll the status endpoint until the request is finished
-    thread_wait(check, [retry_every(1)]),
-    write('Fetching result'), nl,
-    http_open('http://localhost:3000/value', In2, []),
-    json_read(In2, Json),
-    close(In2),
-    write(Json), nl,
-    write('Done'), nl.
-```
-
-The output of the Prolog client would be the following.
-
-```
-?- polling.
-Starting
-status: f 1712614154.6943989
-status: f 1712614155.695983
-status: f 1712614156.6980333
-status: f 1712614157.700015
-status: f 1712614158.7022102
-status: t 1712614159.7041478
-Fetching result
-42
-Done
-true.
-```
+#figure(
+    code_block[```
+    ?- polling.
+    Starting
+    status: f 1712614154.6943989
+    status: f 1712614155.695983
+    status: f 1712614156.6980333
+    status: f 1712614157.700015
+    status: f 1712614158.7022102
+    status: t 1712614159.7041478
+    Fetching result
+    42
+    true.
+    ```],
+    caption: [Output of the Prolog client],
+) <lst:long_running_prolog_output>
 
 == Metadata in Prolog variables
 
 To be able to send the variables and constraints to the service, the client library must be able to keep track of metadata in the variables. This metadata is used to identify the variables and the constraints in the service.
 
-Here is an example of how this could be implemented in SWI-Prolog.
+@lst:var_metadata_prolog is an example of how this could be implemented in SWI-Prolog.
 
-```prolog
-% hook that is called when a variable is unified
-attr_unify_hook(M, E) :- 
-    writeln('Variable was unified with:'),
-    write('value: '), writeln(E),
-    write('had rclp attribute: '), writeln(M).
+#figure(
+    code_block[```swi-prolog
+    % hook that is called when a variable is unified
+    attr_unify_hook(M, E) :- 
+        writeln('Variable was unified with:'),
+        write('value: '), writeln(E),
+        write('had rclp attribute: '), writeln(M).
 
-define([], _).
-define([Var|Ls], N) :-
-    % add the rclp attribute to the variable with value N
-    put_attr(Var, rclp, N),
-    N1 is N + 1,
-    define(Ls, N1).
+    define([], _).
+    define([Var|Ls], N) :-
+        % add the rclp attribute to the variable with value N
+        put_attr(Var, rclp, N),
+        N1 is N + 1,
+        define(Ls, N1).
 
-define(Ls) :-
-    define(Ls, 1).
+    define(Ls) :-
+        define(Ls, 1).
 
-solve([]).
-solve([Var|Ls]) :-
-    % get the rclp attribute from the variable
-    get_attr(Var, rclp, N),
-    writeln(N),
-    solve(Ls).
+    solve([]).
+    solve([Var|Ls]) :-
+        % get the rclp attribute from the variable
+        get_attr(Var, rclp, N),
+        writeln(N),
+        solve(Ls).
 
-go :-
-    define([X,Y,Z]),
-    solve([X,Y]),
-    Z = a.
-```
+    go :-
+        define([X,Y,Z]),
+        solve([X,Y]),
+        Z = a.
+    ```],
+    caption: [Prolog variables with metadata],
+) <lst:var_metadata_prolog>
 
-The output of the program would be the following.
+The output of the Prolog program is shown in @lst:var_metadata_prolog_output.
 
-```
-?- go.
-1
-2
-Variable was unified with:
-value: A
-had rclp attribute: 3
-true.
-```
+#figure(
+    code_block[```
+    ?- go.
+    1
+    2
+    Variable was unified with:
+    value: a
+    had rclp attribute: 3
+    true.
+    ```],
+    caption: [Output of the Prolog program],
+) <lst:var_metadata_prolog_output>
 
 == Technological choices
 
@@ -341,41 +359,44 @@ The Prolog client library is a library that allows the user to access the remote
 
 === Usage example
 
-This is an example of how the library should be used.
+@lst:prolog_client_example is an example of how the library should be used.
 
-```prolog
-:- include('remote-clp.pl').
+#figure(
+    code_block[```swi-prolog
+    :- include('remote-clp.pl').
 
-pyth_triplets(N,Ls1) :- 
-    Ls1 = [A1,B1,C],
-    Ls = [U,V,K, A,B,C], 
-    rclp_fd_domain(Ls,1,N),
-    A*A + B*B ~#= C*C,
-    UU ~#= U*U, 
-    VV ~#= V*V,
-    (U-V) rem 2 ~#= 1,
-    coprime(U,V, Aux),
-    A ~#= K*(UU - VV),
-    C ~#= K*(UU + VV),
-    B ~#= K*(2*U*V),
-    append([UU, VV|Ls], Aux, AllVariables),
-    rclp_fd_labeling(AllVariables), 
-    unbreak_symmetry(A,B, A1,B1).
+    pyth_triplets(N,Ls1) :- 
+        Ls1 = [A1,B1,C],
+        Ls = [U,V,K, A,B,C], 
+        rclp_fd_domain(Ls,1,N),
+        A*A + B*B ~#= C*C,
+        UU ~#= U*U, 
+        VV ~#= V*V,
+        (U-V) rem 2 ~#= 1,
+        coprime(U,V, Aux),
+        A ~#= K*(UU - VV),
+        C ~#= K*(UU + VV),
+        B ~#= K*(2*U*V),
+        append([UU, VV|Ls], Aux, AllVariables),
+        rclp_fd_labeling(AllVariables), 
+        unbreak_symmetry(A,B, A1,B1).
 
-coprime(A,B, [X,Y]) :-
-	X~#=<B, Y~#=<A, 
-	(A*X - B*Y ~#= 1).
+    coprime(A,B, [X,Y]) :-
+        X~#=<B, Y~#=<A, 
+        (A*X - B*Y ~#= 1).
 
-unbreak_symmetry(A,B, A,B).
-unbreak_symmetry(A,B, B,A).
+    unbreak_symmetry(A,B, A,B).
+    unbreak_symmetry(A,B, B,A).
 
-optimizeDemo(A,B) :- 
-    rclp_fd_domain([A,B],0, 50),
-    Z ~#= 3*A + 2*B,
-    A+B ~#< 50,
-    4*A-B ~#< 88,
-    rclp_fd_maximize(rclp_fd_labeling([A,B]), Z).
-```
+    optimizeDemo(A,B) :- 
+        rclp_fd_domain([A,B],0, 50),
+        Z ~#= 3*A + 2*B,
+        A+B ~#< 50,
+        4*A-B ~#< 88,
+        rclp_fd_maximize(rclp_fd_labeling([A,B]), Z).
+    ```],
+    caption: [Example of a Prolog program using the client library],
+) <lst:prolog_client_example>
 
 == Remote CLP Service
 
