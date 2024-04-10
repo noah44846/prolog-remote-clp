@@ -1,0 +1,281 @@
+{
+    "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a65",
+    "variables": [
+        {
+            "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a66",
+            "lb": 0,
+            "ub": 50
+        },
+        {
+            "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a67",
+            "lb": 0,
+            "ub": 50
+        },
+        {
+            "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a68",
+            "lb": 0,
+            "ub": 50
+        }
+    ],
+    "constraints": [
+        {
+            "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a69",
+            "ast": {
+                "type": "operator",
+                "value": "<=",
+                "children": [
+                    {
+                        "type": "operator",
+                        "value": "+",
+                        "children": [
+                            {
+                                "type": "operator",
+                                "value": "*",
+                                "children": [
+                                    {
+                                        "type": "variable",
+                                        "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a66"
+                                    },
+                                    {
+                                        "type": "literal",
+                                        "value": 2
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "operator",
+                                "value": "+",
+                                "children": [
+                                    {
+                                        "type": "operator",
+                                        "value": "*",
+                                        "children": [
+                                            {
+                                                "type": "variable",
+                                                "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a67"
+                                            },
+                                            {
+                                                "type": "literal",
+                                                "value": 7
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "operator",
+                                        "value": "*",
+                                        "children": [
+                                            {
+                                                "type": "variable",
+                                                "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a68"
+                                            },
+                                            {
+                                                "type": "literal",
+                                                "value": 3
+                                            }
+                                        ]
+                                    }
+                                ]
+                                
+                            }
+                        ]
+                    },
+                    {
+                        "type": "literal",
+                        "value": 50
+                    }
+                ]
+            }
+        },
+        {
+            "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a6a",
+            "ast": {
+                "type": "operator",
+                "value": "<=",
+                "children": [
+                    {
+                        "type": "operator",
+                        "value": "+",
+                        "children": [
+                            {
+                                "type": "operator",
+                                "value": "*",
+                                "children": [
+                                    {
+                                        "type": "variable",
+                                        "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a66"
+                                    },
+                                    {
+                                        "type": "literal",
+                                        "value": 3
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "operator",
+                                "value": "+",
+                                "children": [
+                                    {
+                                        "type": "operator",
+                                        "value": "*",
+                                        "children": [
+                                            {
+                                                "type": "variable",
+                                                "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a67"
+                                            },
+                                            {
+                                                "type": "literal",
+                                                "value": -5
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "operator",
+                                        "value": "*",
+                                        "children": [
+                                            {
+                                                "type": "variable",
+                                                "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a68"
+                                            },
+                                            {
+                                                "type": "literal",
+                                                "value": 7
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "literal",
+                        "value": 45
+                    }
+                ]
+            }
+        },
+        {
+            "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a6b",
+            "ast": {
+                "type": "operator",
+                "value": "<=",
+                "children": [
+                    {
+                        "type": "operator",
+                        "value": "+",
+                        "children": [
+                            {
+                                "type": "operator",
+                                "value": "*",
+                                "children": [
+                                    {
+                                        "type": "variable",
+                                        "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a66"
+                                    },
+                                    {
+                                        "type": "literal",
+                                        "value": 5
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "operator",
+                                "value": "+",
+                                "children": [
+                                    {
+                                        "type": "operator",
+                                        "value": "*",
+                                        "children": [
+                                            {
+                                                "type": "variable",
+                                                "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a67"
+                                            },
+                                            {
+                                                "type": "literal",
+                                                "value": 2
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "operator",
+                                        "value": "*",
+                                        "children": [
+                                            {
+                                                "type": "variable",
+                                                "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a68"
+                                            },
+                                            {
+                                                "type": "literal",
+                                                "value": -6
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "literal",
+                        "value": 37
+                    }
+                ]
+            }
+        }
+    ],
+    "objective": {
+        "type": "maximize",
+        "ast": {
+            "type": "operator",
+            "value": "+",
+            "children": [
+                {
+                    "type": "operator",
+                    "value": "+",
+                    "children": [
+                        {
+                            "type": "operator",
+                            "value": "*",
+                            "children": [
+                                {
+                                    "type": "variable",
+                                    "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a66"
+                                },
+                                {
+                                    "type": "literal",
+                                    "value": 2
+                                }
+                            ]
+                        },
+                        {
+                            "type": "operator",
+                            "value": "*",
+                            "children": [
+                                {
+                                    "type": "variable",
+                                    "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a67"
+                                },
+                                {
+                                    "type": "literal",
+                                    "value": 2
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "operator",
+                    "value": "*",
+                    "children": [
+                        {
+                            "type": "variable",
+                            "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a68"
+                        },
+                        {
+                            "type": "literal",
+                            "value": 3
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

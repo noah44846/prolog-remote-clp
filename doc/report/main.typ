@@ -327,7 +327,7 @@ For the API Gateway, a simple but fast language is needed. *Go* is a good choice
 
 The message queue is responsible for distributing the requests to the workers. *Rabbit MQ* is a good choice for this. It is a robust message queue that is easy to deploy and has good support for multiple languages.
 
-The workers are responsible for solving the requests. In our case we need to choose a language that is supported by Google OR-Tools. For the best performance and support (Google OR-Tools is written in C++), we will use *C++* for this.
+The workers are responsible for solving the requests. In our case we need to choose a language that is supported by Google OR-Tools. *Python* is a good choice for this. It is well supported by Google OR-Tools and is easy to use and deploy.
 
 = Design
 
