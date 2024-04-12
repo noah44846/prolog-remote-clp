@@ -3,6 +3,7 @@ services:
   job-dispatcher:
     build: ./rclp-service/job-dispatcher
     container_name: job-dispatcher
+    entrypoint: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "/job-dispatcher"]
     depends_on:
       - rabbitmq
     ports:
@@ -18,6 +19,7 @@ services:
 
   worker:
     build: ./rclp-service/worker
+    command: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "python", "app.py"]
     deploy:
       replicas: 3
     depends_on:

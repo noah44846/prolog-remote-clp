@@ -21,8 +21,8 @@ FROM bash
 # to root folder of scratch container.
 COPY --from=builder ["/build/job-dispatcher", "/"]
 
-COPY ./wait-for-it.sh /wait-for-it.sh
+RUN wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
 RUN chmod +x /wait-for-it.sh
 
 # Command to run when starting the container.
-ENTRYPOINT ["sh", "-c", "/wait-for-it.sh ${RABBITMQ_HOST}:${RABBITMQ_PORT} -- /job-dispatcher"]
+ENTRYPOINT ["/job-dispatcher"]
