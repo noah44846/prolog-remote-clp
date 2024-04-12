@@ -1,6 +1,3 @@
-
-# solve_math_opt_model_via_http.py
-
 """Example of solving a MathOpt model through the OR API.
 
 The model is built using the Python API, and the corresponding proto is

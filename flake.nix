@@ -16,6 +16,11 @@
           swiProlog
           mermaid-cli
 
+          go
+          gcc
+          go-tools
+
+          pyright
           python311Packages.numpy
           python311Packages.pika
           python311Packages.mypy

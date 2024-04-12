@@ -1,11 +1,5 @@
 from ortools.sat.python import cp_model
 
-#import pika
-
-# connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-# channel = connection.channel()
-# print(channel)
-
 def simple_sat_program():
     """Minimal CP-SAT example to showcase calling the solver."""
     # Creates the model.
@@ -42,6 +36,3 @@ def simple_sat_program():
     print(f"  conflicts: {solver.num_conflicts}")
     print(f"  branches : {solver.num_branches}")
     print(f"  wall time: {solver.wall_time} s")
-
-if __name__ == "__main__":
-    simple_sat_program()

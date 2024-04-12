@@ -1,0 +1,45 @@
+version: "3.2"
+services:
+  job-dispatcher:
+    build: ./rclp-service/job-dispatcher
+    container_name: job-dispatcher
+    depends_on:
+      - rabbitmq
+    ports:
+      - 3000:3000
+    environment:
+      - PORT=3000
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_JOBS_QUEUE=rclp-jobs
+      - RABBITMQ_STATUS_QUEUE=rclp-status
+
+  worker:
+    build: ./rclp-service/worker
+    deploy:
+      replicas: 3
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_JOBS_QUEUE=rclp-jobs
+      - RABBITMQ_STATUS_QUEUE=rclp-status
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - rabbitmq_data:/var/lib/rabbitmq/
+        - rabbitmq_log:/var/log/rabbitmq
+
+volumes:
+  rabbitmq_data:
+  rabbitmq_log:

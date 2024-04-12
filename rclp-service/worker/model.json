@@ -20,7 +20,8 @@
     "constraints": [
         {
             "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a69",
-            "ast": {
+            "type": "linear",
+            "value": {
                 "type": "operator",
                 "value": "<=",
                 "children": [
@@ -88,7 +89,8 @@
         },
         {
             "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a6a",
-            "ast": {
+            "type": "linear",
+            "value": {
                 "type": "operator",
                 "value": "<=",
                 "children": [
@@ -155,7 +157,8 @@
         },
         {
             "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a6b",
-            "ast": {
+            "type": "linear",
+            "value": {
                 "type": "operator",
                 "value": "<=",
                 "children": [
@@ -223,7 +226,7 @@
     ],
     "objective": {
         "type": "maximize",
-        "ast": {
+        "value": {
             "type": "operator",
             "value": "+",
             "children": [
