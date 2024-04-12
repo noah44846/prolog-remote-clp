@@ -5,7 +5,7 @@ from math import inf
 from ortools.sat.python.cp_model import IntVar, CpModel, CpSolver, LinearExprT, BoundedLinearExprT, CpSolverSolutionCallback, BoundedLinearExpression, LinearExpr
 import ortools.sat.python.cp_model as cp_model
 
-class RclpResultSolutionCallback(CpSolverSolutionCallback):
+class RemoteClpResultSolutionCallback(CpSolverSolutionCallback):
     def __init__(self, variables: list[IntVar]):
         CpSolverSolutionCallback.__init__(self)
         self.__variables = variables
@@ -132,7 +132,7 @@ def solve_job(json_data: dict) -> dict:
     solver = CpSolver()
     solver.parameters.enumerate_all_solutions = True
 
-    solution_callback = RclpResultSolutionCallback(vars)
+    solution_callback = RemoteClpResultSolutionCallback(vars)
     status = solver.solve(model, solution_callback)
     
     return solution_callback.json_dict
@@ -143,7 +143,7 @@ if __name__ == '__main__':
         solver = CpSolver()
         solver.parameters.enumerate_all_solutions = True
 
-        status = solver.solve(model, RclpResultSolutionCallback(vars))
+        status = solver.solve(model, RemoteClpResultSolutionCallback(vars))
        
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
             pass

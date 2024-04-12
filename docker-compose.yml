@@ -1,9 +1,9 @@
 version: "3.2"
 services:
   job-dispatcher:
-    build: ./rclp-service/job-dispatcher
-    container_name: job-dispatcher
-    entrypoint: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "/job-dispatcher"]
+    build: ./rclp-service/job_dispatcher
+    container_name: job_dispatcher
+    entrypoint: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "/job_dispatcher"]
     depends_on:
       - rabbitmq
     ports:

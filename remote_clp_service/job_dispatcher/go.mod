@@ -1,4 +1,4 @@
-module rclp/job-dispatcher
+module rclp/job_dispatcher
 
 go 1.22.1
 
