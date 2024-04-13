@@ -15,6 +15,11 @@
             "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a68",
             "lb": 0,
             "ub": 50
+        },
+        {
+            "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a6d",
+            "lb": 0,
+            "ub": 50
         }
     ],
     "constraints": [
@@ -222,63 +227,80 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "f1b3b3b0-3b3b-11e4-916c-0800200c9a6c",
+            "type": "linear",
+            "value": {
+                "type": "operator",
+                "value": "==",
+                "children": [
+                    {
+                        "type": "operator",
+                        "value": "+",
+                        "children": [
+                            {
+                                "type": "operator",
+                                "value": "+",
+                                "children": [
+                                    {
+                                        "type": "operator",
+                                        "value": "*",
+                                        "children": [
+                                            {
+                                                "type": "variable",
+                                                "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a66"
+                                            },
+                                            {
+                                                "type": "literal",
+                                                "value": 2
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "operator",
+                                        "value": "*",
+                                        "children": [
+                                            {
+                                                "type": "variable",
+                                                "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a67"
+                                            },
+                                            {
+                                                "type": "literal",
+                                                "value": 2
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "operator",
+                                "value": "*",
+                                "children": [
+                                    {
+                                        "type": "variable",
+                                        "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a68"
+                                    },
+                                    {
+                                        "type": "literal",
+                                        "value": 3
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "variable",
+                        "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a6d"
+                    }
+                ]
+            }   
         }
     ],
-    "objective": {
-        "type": "maximize",
-        "value": {
-            "type": "operator",
-            "value": "+",
-            "children": [
-                {
-                    "type": "operator",
-                    "value": "+",
-                    "children": [
-                        {
-                            "type": "operator",
-                            "value": "*",
-                            "children": [
-                                {
-                                    "type": "variable",
-                                    "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a66"
-                                },
-                                {
-                                    "type": "literal",
-                                    "value": 2
-                                }
-                            ]
-                        },
-                        {
-                            "type": "operator",
-                            "value": "*",
-                            "children": [
-                                {
-                                    "type": "variable",
-                                    "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a67"
-                                },
-                                {
-                                    "type": "literal",
-                                    "value": 2
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "operator",
-                    "value": "*",
-                    "children": [
-                        {
-                            "type": "variable",
-                            "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a68"
-                        },
-                        {
-                            "type": "literal",
-                            "value": 3
-                        }
-                    ]
-                }
-            ]
+    "objectives": [
+        {
+            "type": "max",
+            "value": "f1b3b3b0-3b3b-11e4-916c-0800200c9a6d"
         }
-    }
+    ]
 }

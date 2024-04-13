@@ -12,6 +12,7 @@ class RemoteClpResultSolutionCallback(CpSolverSolutionCallback):
         self.json_dict = []
 
     def on_solution_callback(self):
+        print(f' [X] Solution foundasadasdasdasd')
         res = {}
         for var in self.__variables:
             res[str(var)] = self.Value(var)
@@ -31,25 +32,25 @@ ConstraintNodeType = OperatorType | int | UUID
 def parse_operator(op: str) -> OperatorType:
     match op:
         case '+':
-            return lambda x, y: x.__add__(y)
+            return lambda x, y: x + y
         case '-':
-            return lambda x, y: x.__sub__(y)
+            return lambda x, y: x - y
         case '*':
-            return lambda x, y: x.__mul__(y)
+            return lambda x, y: x * y
         # case '/':
-        #    return lambda x, y: x.__truediv__(y)
+        #    return lambda x, y: x // y
         case '<':
-            return lambda x, y: x.__lt__(y)
+            return lambda x, y: x < y
         case '<=':
-            return lambda x, y: x.__le__(y)
+            return lambda x, y: x <= y
         case '>':
-            return lambda x, y: x.__gt__(y)
+            return lambda x, y: x > y
         case '>=':
-            return lambda x, y: x.__ge__(y)
+            return lambda x, y: x >= y
         case '==':
-            return lambda x, y: x.__eq__(y)
+            return lambda x, y: x == y
         case '!=':
-            return lambda x, y: x.__ne__(y)
+            return lambda x, y: x != y
         case _:
             raise ValueError(f'Invalid operator: {op}')
         
@@ -100,8 +101,8 @@ def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
 
     for var in json_data['variables']:
         var_id = UUID(var['id'])
-        var_ub = int(var['ub']) if 'ub' in var else inf
-        var_lb = int(var['lb']) if 'lb' in var else -inf
+        var_ub = int(var['ub']) if 'ub' in var else cp_model.INT_MAX
+        var_lb = int(var['lb']) if 'lb' in var else cp_model.INT_MIN
         var = model.new_int_var(var_lb, var_ub, str(var_id))
         variables[var_id] = var
 
@@ -115,15 +116,15 @@ def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
             case _:
                 raise ValueError('Invalid constraint type')
 
-    objective = json_data['objective']
-    if objective:
-        expr = parse_linear_expression(objective['value'], variables)
-        assert isinstance(expr, LinearExpr) or isinstance(expr, IntVar) or isinstance(expr, int)
+    if 'objectives' in json_data:
+        objectives = json_data['objectives']
+        for objective in objectives:
+            var = variables[UUID(objective['value'])]
         match objective['type']:
             case 'minimize':
-                model.minimize(expr)
+                model.minimize(var)
             case 'maximize':
-                model.maximize(expr)
+                model.maximize(var)
 
     return model, variables.values()
 

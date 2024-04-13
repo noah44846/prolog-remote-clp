@@ -1,4 +1,7 @@
-% :- include('remote-clp.pl').
+:- use_module('remote_clp').
+
+% set the URL of the remote CLP server (default is 'http://localhost:3000')
+% :- initialization(api_config(url('http://localhost:3000'))).
 
 pyth_triplets(N,Ls1) :- 
     Ls1 = [A1,B1,C],

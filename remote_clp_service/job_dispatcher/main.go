@@ -27,10 +27,10 @@ type Job struct {
 }
 
 type JobResponse struct {
-	Id     uuid.UUID        `json:"id"`
-	Status JobStatus        `json:"status"`
-	Error  string           `json:"error"`
-	Data   []map[string]int `json:"data"`
+	Id     uuid.UUID         `json:"id"`
+	Status JobStatus         `json:"status"`
+	Error  string            `json:"error"`
+	Data   *[]map[string]int `json:"data"`
 }
 
 type JobStatus int
@@ -155,6 +155,7 @@ func startConsuming(channel *amqp.Channel, channelName string, callback func([]b
 	go func() {
 		for message := range messages {
 			callback(message.Body)
+			message.Ack(false)
 		}
 	}()
 }
@@ -170,7 +171,10 @@ func jobResponseCallback(data []byte) {
 	switch resp.Status {
 	case JobStatusDone:
 		log.Println("Job completed:", resp.Id)
-		jobResultMap.Store(resp.Id, resp.Data)
+		jobResultMap.Store(resp.Id, struct {
+			Error string
+			Data  *[]map[string]int
+		}{resp.Error, resp.Data})
 		jobStatusMap.Store(resp.Id, JobStatusDone)
 	case JobStatusInProgress:
 		log.Println("Job processing:", resp.Id)
@@ -254,13 +258,13 @@ func main() {
 		}
 
 		if status == JobStatusDone {
-			c.Response().Header.Add("Location", "/jobs/result/"+id.String())
+			c.Response().Header.Add("Location", "/jobs/results/"+id.String())
 		}
 
 		return c.JSON(jsonResp)
 	})
 
-	app.Get("/jobs/result/:id", func(c *fiber.Ctx) error {
+	app.Get("/jobs/results/:id", func(c *fiber.Ctx) error {
 		id, err := uuid.Parse(c.Params("id"))
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -268,15 +272,26 @@ func main() {
 			})
 		}
 
-		result, ok := jobResultMap.Load(id)
+		// get result and cast to anonymous struct with error and data fields
+		entry, ok := jobResultMap.Load(id)
 		if !ok {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Job not found",
 			})
 		}
+		result, ok := entry.(struct {
+			Error string
+			Data  *[]map[string]int
+		})
+		if !ok {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Invalid job result",
+			})
+		}
 
 		return c.JSON(fiber.Map{
-			"result": result,
+			"data":  result.Data,
+			"error": result.Error,
 		})
 	})
 

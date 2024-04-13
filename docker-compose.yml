@@ -1,7 +1,7 @@
 version: "3.2"
 services:
   job-dispatcher:
-    build: ./rclp-service/job_dispatcher
+    build: ./remote_clp_service/job_dispatcher
     container_name: job_dispatcher
     entrypoint: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "/job_dispatcher"]
     depends_on:
@@ -18,7 +18,7 @@ services:
       - RABBITMQ_STATUS_QUEUE=rclp-status
 
   worker:
-    build: ./rclp-service/worker
+    build: ./remote_clp_service/worker
     command: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "python", "app.py"]
     deploy:
       replicas: 3

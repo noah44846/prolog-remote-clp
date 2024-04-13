@@ -37,10 +37,9 @@ config = broker_configuration()
 class RclpJobStatus(Enum):
     IN_PROGRESS = 'in_progress'
     DONE = 'done'
-    FAILED = 'failed'
 
-def publish_status(ch, job_id: UUID, status: RclpJobStatus, result: dict = None):
-    message = { 'id': str(job_id), 'status': status.value, 'data': result }
+def publish_status(ch, job_id: UUID, status: RclpJobStatus, result: dict = None, error: str = None):
+    message = { 'id': str(job_id), 'status': status.value, 'data': result, 'error': error }
     ch.basic_publish(exchange='', routing_key=config.status_channel_name, body=json.dumps(message))
 
 def process_job(ch, job: dict):
@@ -49,13 +48,19 @@ def process_job(ch, job: dict):
     logger.debug(f' [X] Processing job {job_id}')
     publish_status(ch, job_id, RclpJobStatus.IN_PROGRESS)
 
-    result = solve_job(job) 
-
-    publish_status(ch, job_id, RclpJobStatus.DONE, result)
-    logger.debug(f' [X] Job done {job_id}')
+    try:
+        result = solve_job(job) 
+        publish_status(ch, job_id, RclpJobStatus.DONE, result)
+        logger.debug(f' [X] Job done {result}')
+        logger.debug(f' [X] Job done {job_id}')
+    except Exception as e:
+        logger.error(f' [X] Job failed {job_id}')
+        logger.error(e)
+        publish_status(ch, job_id, RclpJobStatus.DONE, error=str(e))
 
 def on_job_received(ch, method, properties, body: bytes):
     data = body.decode()
+    logger.debug(f' [x] Received {data}')
     json_data = json.loads(data)
     logger.debug(f' [x] Received {json_data["id"]}')
     
