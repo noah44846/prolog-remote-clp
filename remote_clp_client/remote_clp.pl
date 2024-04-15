@@ -145,13 +145,15 @@ add_arithmetic_constraint(Op, A, B) :-
     add_constraint(ParsedExpr).
 
 
-% check_status(+StatusUrl, -ResultsPath)
-check_status(StatusUrl, ResultsPath) :-
-    http_get(StatusUrl, json([status=Status]), [headers(Headers)]),
+% check_status(+StatusUrl, -Results)
+check_result(StatusUrl, Data, Error) :-
+    http_get(StatusUrl, json(Ls), []),
+    member(status=Status, Ls),
     write('job status: '), write(Status), nl,
     Status = done,
-    member(location(ResultsPath), Headers),
-    write('job results path'), write(ResultsPath), nl.
+    % TODO: not the entire response
+    member(data=Data, Ls),
+    member(error=Error, Ls).
 
 
 % http_solve(+Constraints)
@@ -162,17 +164,17 @@ http_solve(Json, Data) :-
     http_post(
         JobsUrl,
         json(Json),
-        json([status=Status]),
+        json(Ls),
         [headers(Headers)]),
-    member(location(StatusPath), Headers),
+    member(status=Status, Ls),
+    member(location(ResultsPath), Headers),
     write('job status: '), write(Status), nl,
-    write('job status path: '), write(StatusPath), nl,
+    write('job results path: '), write(ResultsPath), nl,
 
-    atom_concat(Url, StatusPath, StatusUrl),
-    thread_wait(check_status(StatusUrl, ResultsPath), [retry_every(1)]),
+    atom_concat(Url, ResultsPath, ResutlsUrl),
+    thread_wait(check_result(ResutlsUrl, Data, Error), [retry_every(1)]),
 
-    atom_concat(Url, ResultsPath, ResultsUrl),
-    http_get(ResultsUrl, json([data=Data, error=Error]), []),
+    writeln('job done'),
     (Error \= '' -> (writeln(Error), fail) ; true).
 
 
@@ -202,7 +204,7 @@ labeling(Options, Vars) :-
 
     (Options = [] ->
         JsonAttrs1 = JsonAttrs ;
-        (parse_objectives(Options, Objectives), JsonAttrs1 = [objectives=Objectives|JsonAttrs])),
+        (parse_objectives(Options, Obj), JsonAttrs1 = [objectives=Obj|JsonAttrs])),
 
     Json = json(JsonAttrs1),
     http_solve(Json, Solutions),

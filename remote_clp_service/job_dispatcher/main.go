@@ -15,6 +15,24 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	DefaultAmqpServerHost     = "localhost"
+	DefaultAmqpServerPort     = "5672"
+	DefaultAmqpServerUser     = "guest"
+	DefaultAmqpServerPassword = "guest"
+	DefaultJobsChannelName    = "rclp-jobs"
+	DefaultStatusChannelName  = "rclp-status"
+	DefaultApiPort            = "3000"
+	AmqpServerHostEnv         = "RABBITMQ_HOST"
+	AmqpServerPortEnv         = "RABBITMQ_PORT"
+	AmqpServerUserEnv         = "RABBITMQ_USER"
+	AmqpServerPasswordEnv     = "RABBITMQ_PASSWORD"
+	JobsChannelNameEnv        = "RABBITMQ_JOBS_CHANNEL_NAME"
+	StatusChannelNameEnv      = "RABBITMQ_STATUS_CHANNEL_NAME"
+	ApiPortEnv                = "PORT"
+	AmqpServerUrlFormat       = "amqp://%s:%s@%s:%s/"
+)
+
 type Config struct {
 	AmqpServerURL     string
 	JobsChannelName   string
@@ -63,39 +81,39 @@ func (s *JobStatus) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var jobStatusMap sync.Map
-var jobResultMap sync.Map
+type JobResultMap sync.Map
+
+var jobResultMap JobResultMap
+
+func (m *JobResultMap) Load(key uuid.UUID) (*JobResponse, bool) {
+	value, ok := (*sync.Map)(m).Load(key)
+	if !ok {
+		return nil, false
+	}
+	return value.(*JobResponse), true
+}
+
+func (m *JobResultMap) Store(key uuid.UUID, value *JobResponse) {
+	(*sync.Map)(m).Store(key, value)
+}
 
 func getConfig() Config {
-	amqpServerHost := os.Getenv("RABBITMQ_HOST")
-	if amqpServerHost == "" {
-		amqpServerHost = "localhost"
+	getEnvOrDefault := func(key, defaultValue string) string {
+		value := os.Getenv(key)
+		if value == "" {
+			return defaultValue
+		}
+		return value
 	}
-	amqpServerPort := os.Getenv("RABBITMQ_PORT")
-	if amqpServerPort == "" {
-		amqpServerPort = "5672"
-	}
-	amqpServerUser := os.Getenv("RABBITMQ_USER")
-	if amqpServerUser == "" {
-		amqpServerUser = "guest"
-	}
-	amqpServerPassword := os.Getenv("RABBITMQ_PASSWORD")
-	if amqpServerPassword == "" {
-		amqpServerPassword = "guest"
-	}
-	amqpServerURL := fmt.Sprintf("amqp://%s:%s@%s:%s/", amqpServerUser, amqpServerPassword, amqpServerHost, amqpServerPort)
-	jobsChannelName := os.Getenv("RABBITMQ_JOBS_CHANNEL_NAME")
-	if jobsChannelName == "" {
-		jobsChannelName = "rclp-jobs"
-	}
-	statusChannelName := os.Getenv("RABBITMQ_STATUS_CHANNEL_NAME")
-	if statusChannelName == "" {
-		statusChannelName = "rclp-status"
-	}
-	apiPort := os.Getenv("PORT")
-	if apiPort == "" {
-		apiPort = "3000"
-	}
+
+	amqpServerHost := getEnvOrDefault(AmqpServerHostEnv, DefaultAmqpServerHost)
+	amqpServerPort := getEnvOrDefault(AmqpServerPortEnv, DefaultAmqpServerPort)
+	amqpServerUser := getEnvOrDefault(AmqpServerUserEnv, DefaultAmqpServerUser)
+	amqpServerPassword := getEnvOrDefault(AmqpServerPasswordEnv, DefaultAmqpServerPassword)
+	amqpServerURL := fmt.Sprintf(AmqpServerUrlFormat, amqpServerUser, amqpServerPassword, amqpServerHost, amqpServerPort)
+	jobsChannelName := getEnvOrDefault(JobsChannelNameEnv, DefaultJobsChannelName)
+	statusChannelName := getEnvOrDefault(StatusChannelNameEnv, DefaultStatusChannelName)
+	apiPort := getEnvOrDefault(ApiPortEnv, DefaultApiPort)
 
 	return Config{
 		AmqpServerURL:     amqpServerURL,
@@ -138,7 +156,7 @@ func publishJob(channel *amqp.Channel, config Config, job []byte) {
 	}
 }
 
-func startConsuming(channel *amqp.Channel, channelName string, callback func([]byte)) {
+func startConsuming(channel *amqp.Channel, channelName string) {
 	messages, err := channel.Consume(
 		channelName, // queue name
 		"",          // consumer
@@ -154,7 +172,7 @@ func startConsuming(channel *amqp.Channel, channelName string, callback func([]b
 
 	go func() {
 		for message := range messages {
-			callback(message.Body)
+			jobResponseCallback(message.Body)
 			message.Ack(false)
 		}
 	}()
@@ -171,14 +189,10 @@ func jobResponseCallback(data []byte) {
 	switch resp.Status {
 	case JobStatusDone:
 		log.Println("Job completed:", resp.Id)
-		jobResultMap.Store(resp.Id, struct {
-			Error string
-			Data  *[]map[string]int
-		}{resp.Error, resp.Data})
-		jobStatusMap.Store(resp.Id, JobStatusDone)
+		jobResultMap.Store(resp.Id, resp)
 	case JobStatusInProgress:
 		log.Println("Job processing:", resp.Id)
-		jobStatusMap.Store(resp.Id, JobStatusInProgress)
+		jobResultMap.Store(resp.Id, resp)
 	default:
 		log.Println("Invalid job state", resp.Id)
 	}
@@ -209,7 +223,7 @@ func main() {
 	declareQueue(channelRabbitMQ, config.StatusChannelName)
 
 	// Start consuming messages from the jobs queue.
-	startConsuming(channelRabbitMQ, config.StatusChannelName, jobResponseCallback)
+	startConsuming(channelRabbitMQ, config.StatusChannelName)
 
 	// Create a new Fiber instance.
 	app := fiber.New()
@@ -228,40 +242,17 @@ func main() {
 		}
 
 		publishJob(channelRabbitMQ, config, c.Body())
-		jobStatusMap.Store(payload.Id, JobStatusPending)
 
-		c.Response().Header.Add("Location", "/jobs/status/"+payload.Id.String())
-
-		// return 202 Accepted with location to /jobs/status/:id
-		return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
-			"status": JobStatusPending.String(),
-		})
-	})
-
-	app.Get("/jobs/status/:id", func(c *fiber.Ctx) error {
-		id, err := uuid.Parse(c.Params("id"))
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Invalid job ID",
-			})
+		jobResponse := JobResponse{
+			Id:     payload.Id,
+			Status: JobStatusInProgress,
 		}
+		jobResultMap.Store(payload.Id, &jobResponse)
 
-		status, ok := jobStatusMap.Load(id)
-		if !ok {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "Job not found",
-			})
-		}
+		c.Response().Header.Add("Location", "/jobs/results/"+payload.Id.String())
 
-		jsonResp := fiber.Map{
-			"status": status.(JobStatus).String(),
-		}
-
-		if status == JobStatusDone {
-			c.Response().Header.Add("Location", "/jobs/results/"+id.String())
-		}
-
-		return c.JSON(jsonResp)
+		// return 202 Accepted with location to /jobs/results/:id
+		return c.Status(fiber.StatusAccepted).JSON(jobResponse)
 	})
 
 	app.Get("/jobs/results/:id", func(c *fiber.Ctx) error {
@@ -272,27 +263,14 @@ func main() {
 			})
 		}
 
-		// get result and cast to anonymous struct with error and data fields
-		entry, ok := jobResultMap.Load(id)
+		results, ok := jobResultMap.Load(id)
 		if !ok {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Job not found",
 			})
 		}
-		result, ok := entry.(struct {
-			Error string
-			Data  *[]map[string]int
-		})
-		if !ok {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Invalid job result",
-			})
-		}
 
-		return c.JSON(fiber.Map{
-			"data":  result.Data,
-			"error": result.Error,
-		})
+		return c.JSON(results)
 	})
 
 	// Start Fiber API server.
