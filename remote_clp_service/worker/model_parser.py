@@ -1,6 +1,5 @@
 from typing import Generic, Optional, TypeVar, Callable
 from uuid import UUID
-from math import inf
 
 from ortools.sat.python.cp_model import IntVar, CpModel, CpSolver, LinearExprT, BoundedLinearExprT, CpSolverSolutionCallback, BoundedLinearExpression, LinearExpr
 import ortools.sat.python.cp_model as cp_model
@@ -12,7 +11,6 @@ class RemoteClpResultSolutionCallback(CpSolverSolutionCallback):
         self.json_dict = []
 
     def on_solution_callback(self):
-        print(f' [X] Solution foundasadasdasdasd')
         res = {}
         for var in self.__variables:
             res[str(var)] = self.Value(var)
@@ -101,8 +99,8 @@ def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
 
     for var in json_data['variables']:
         var_id = UUID(var['id'])
-        var_ub = int(var['ub']) if 'ub' in var else cp_model.INT_MAX
-        var_lb = int(var['lb']) if 'lb' in var else cp_model.INT_MIN
+        var_ub = int(var['ub']) if 'ub' in var else cp_model.INT32_MAX
+        var_lb = int(var['lb']) if 'lb' in var else cp_model.INT32_MIN
         var = model.new_int_var(var_lb, var_ub, str(var_id))
         variables[var_id] = var
 
@@ -121,9 +119,9 @@ def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
         for objective in objectives:
             var = variables[UUID(objective['value'])]
         match objective['type']:
-            case 'minimize':
+            case 'min':
                 model.minimize(var)
-            case 'maximize':
+            case 'max':
                 model.maximize(var)
 
     return model, variables.values()
@@ -131,12 +129,27 @@ def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
 def solve_job(json_data: dict) -> dict:
     model, vars = parse_model(json_data)
     solver = CpSolver()
+
     solver.parameters.enumerate_all_solutions = True
+    # if (not model.has_objective()):
+    #     solver.parameters.enumerate_all_solutions = True
 
     solution_callback = RemoteClpResultSolutionCallback(vars)
     status = solver.solve(model, solution_callback)
-    
-    return solution_callback.json_dict
+
+    match status:
+        case cp_model.OPTIMAL | cp_model.FEASIBLE:
+            if model.has_objective():
+                res = {}
+                for var in vars:
+                    res[str(var)] = solver.Value(var)
+                return [res]
+
+            return solution_callback.json_dict
+        case cp_model.MODEL_INVALID:
+            raise ValueError(f'Invalid model: {model.Validate()}')
+        case _:
+            raise ValueError(f'No solution found: {status}')
 
 if __name__ == '__main__':
     with open('model.json', 'r') as f:

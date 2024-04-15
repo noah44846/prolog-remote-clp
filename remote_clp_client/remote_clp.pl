@@ -52,7 +52,8 @@
 %     writeln('Variable was unified with:'),
 %     write('value: '), writeln(E),
 %     write('had rclp attribute: '), writeln(M).
-% attr_unify_hook(_, _).
+attr_unify_hook(_, _).
+
 
 % api_config(+Config)
 api_config([]).
@@ -175,6 +176,15 @@ http_solve(Json, Data) :-
     (Error \= '' -> (writeln(Error), fail) ; true).
 
 
+% unify_solution(+JsonVars, +Vars)
+unify_solution1(_, []).
+unify_solution1(JsonVars, [Var|Vars]) :-
+    get_remote_clp_attr(Var, Uuid, _, _),
+    member('='(Uuid, Val), JsonVars),
+    Var = Val,
+    unify_solution1(JsonVars, Vars).
+
+
 % fd_var(+Var)
 fd_var(Var) :- get_remote_clp_attr(Var, _, _, _).
 
@@ -182,15 +192,26 @@ fd_var(Var) :- get_remote_clp_attr(Var, _, _, _).
 % labeling(+Options, +Vars)
 labeling(Options, Vars) :-
     parse_vars(Vars, VarsJson),
+    
     get_constraints(Constraints),
     % TODO: clear constraints ?
-    parse_objectives(Options, Objectives),
+    nb_setval(constraints, []),
+
     uuid(Uuid, [version(4)]),
-    Json = json([id=Uuid, variables=VarsJson, constraints=Constraints, objectives=Objectives]),
-    http_solve(Json, Data).
+    JsonAttrs = [id=Uuid, variables=VarsJson, constraints=Constraints],
+
+    (Options = [] ->
+        JsonAttrs1 = JsonAttrs ;
+        (parse_objectives(Options, Objectives), JsonAttrs1 = [objectives=Objectives|JsonAttrs])),
+
+    Json = json(JsonAttrs1),
+    http_solve(Json, Solutions),
+
+    member(json(SolutionVars), Solutions),
+    unify_solution1(SolutionVars, Vars).
 
 % label(+Vars)
-label(Vars) :- fd_labeling([], Vars).
+label(Vars) :- labeling([], Vars).
 
 
 % +Var in +Lb .. +Ub

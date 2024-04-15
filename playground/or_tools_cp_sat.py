@@ -10,23 +10,29 @@ def simple_sat_program():
     x = model.new_int_var(0, var_upper_bound, "x")
     y = model.new_int_var(0, var_upper_bound, "y")
     z = model.new_int_var(0, var_upper_bound, "z")
+    a = model.new_int_var(cp_model.INT32_MIN, cp_model.INT32_MAX, 'a')
 
     # Creates the constraints.
     model.add(2 * x + 7 * y + 3 * z <= 50)
     model.add(3 * x - 5 * y + 7 * z <= 45)
     model.add(5 * x + 2 * y - 6 * z <= 37)
 
-    model.maximize(2 * x + 2 * y + 3 * z)
+    model.add(2 * x + 2 * y + 3 * z == a)
+
+    model.maximize(a)
 
     # Creates a solver and solves the model.
     solver = cp_model.CpSolver()
     status = solver.solve(model)
+    solver.parameters.enumerate_all_solutions = True
 
     if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
         print(f"Maximum of objective function: {solver.objective_value}\n")
         print(f"x = {solver.value(x)}")
         print(f"y = {solver.value(y)}")
         print(f"z = {solver.value(z)}")
+    elif status == cp_model.MODEL_INVALID:
+        print(model.Validate())
     else:
         print("No solution found.")
 
@@ -36,3 +42,6 @@ def simple_sat_program():
     print(f"  conflicts: {solver.num_conflicts}")
     print(f"  branches : {solver.num_branches}")
     print(f"  wall time: {solver.wall_time} s")
+
+if __name__ == "__main__":
+    simple_sat_program()
