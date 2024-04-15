@@ -4,6 +4,7 @@ from uuid import UUID
 from ortools.sat.python.cp_model import IntVar, CpModel, CpSolver, LinearExprT, BoundedLinearExprT, CpSolverSolutionCallback, BoundedLinearExpression, LinearExpr
 import ortools.sat.python.cp_model as cp_model
 
+
 class RemoteClpResultSolutionCallback(CpSolverSolutionCallback):
     def __init__(self, variables: list[IntVar]):
         CpSolverSolutionCallback.__init__(self)
@@ -16,16 +17,21 @@ class RemoteClpResultSolutionCallback(CpSolverSolutionCallback):
             res[str(var)] = self.Value(var)
         self.json_dict.append(res)
 
+
 T = TypeVar('T')
 
+
 class BTNode(Generic[T]):
-    def __init__(self, data: T, left: Optional[T] = None, right: Optional[T] =None):
+    def __init__(self, data: T, left: Optional[T] = None, right: Optional[T] = None):
         self.data = data
         self.left = left
         self.right = right
 
-OperatorType = Callable[[LinearExprT, LinearExprT], LinearExprT | BoundedLinearExprT]
+
+OperatorType = Callable[[LinearExprT, LinearExprT],
+                        LinearExprT | BoundedLinearExprT]
 ConstraintNodeType = OperatorType | int | UUID
+
 
 def parse_operator(op: str) -> OperatorType:
     match op:
@@ -51,7 +57,8 @@ def parse_operator(op: str) -> OperatorType:
             return lambda x, y: x != y
         case _:
             raise ValueError(f'Invalid operator: {op}')
-        
+
+
 def parse_ast(ast: dict) -> BTNode[ConstraintNodeType]:
     root: BTNode[ConstraintNodeType] = BTNode(ast)
     nodes = [root]
@@ -75,6 +82,7 @@ def parse_ast(ast: dict) -> BTNode[ConstraintNodeType]:
 
     return root
 
+
 def parse_linear_expression(ast: dict, variables: dict[UUID, IntVar]):
     root = parse_ast(ast)
 
@@ -87,8 +95,9 @@ def parse_linear_expression(ast: dict, variables: dict[UUID, IntVar]):
             return node.data
         elif isinstance(node.data, UUID):
             return variables[node.data]
-        
+
     return inner(root)
+
 
 def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
     model = CpModel()
@@ -109,7 +118,8 @@ def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
         match constraint['type']:
             case 'linear':
                 expr = parse_linear_expression(constraint['value'], variables)
-                assert isinstance(expr, BoundedLinearExpression) or isinstance(expr, bool)
+                assert isinstance(
+                    expr, BoundedLinearExpression) or isinstance(expr, bool)
                 constraint = model.add(expr).with_name(str(constraint_id))
             case _:
                 raise ValueError('Invalid constraint type')
@@ -125,6 +135,7 @@ def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
                 model.maximize(var)
 
     return model, variables.values()
+
 
 def solve_job(json_data: dict) -> dict:
     model, vars = parse_model(json_data)
@@ -151,6 +162,7 @@ def solve_job(json_data: dict) -> dict:
         case _:
             raise ValueError(f'No solution found: {status}')
 
+
 if __name__ == '__main__':
     with open('model.json', 'r') as f:
         model, vars = parse_model(f.read())
@@ -158,7 +170,7 @@ if __name__ == '__main__':
         solver.parameters.enumerate_all_solutions = True
 
         status = solver.solve(model, RemoteClpResultSolutionCallback(vars))
-       
+
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
             pass
         else:
