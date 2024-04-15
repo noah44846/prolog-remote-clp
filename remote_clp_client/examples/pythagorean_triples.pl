@@ -7,7 +7,7 @@ pyth_triplets(N,Ls1) :-
 	A*A + B*B #= C*C,
 	UU #= U*U, 
 	VV #= V*V,
-	(U-V) rem 2 #= 1,
+	(U-V) mod 2 #= 1,
 	coprime(U,V, Aux),
 	A #= K*(UU - VV),
 	C #= K*(UU + VV),

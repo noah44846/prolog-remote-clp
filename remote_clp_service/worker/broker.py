@@ -64,7 +64,7 @@ def process_job(ch, job: dict):
         logger.debug(f' [X] Job done {job_id}')
     except Exception as e:
         logger.error(f' [X] Job failed {job_id}')
-        logger.error(e)
+        logger.exception(e)
         publish_status(ch, job_id, RclpJobStatus.DONE, error=str(e))
 
 

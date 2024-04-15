@@ -17,7 +17,12 @@ def simple_sat_program():
     model.add(3 * x - 5 * y + 7 * z <= 45)
     model.add(5 * x + 2 * y - 6 * z <= 37)
 
-    model.add(2 * x + 2 * y + 3 * z == a)
+    h = model.new_int_var(0, var_upper_bound, 'h')
+    j = model.new_int_var(0, var_upper_bound, 'j')
+    model.add(j == 2*x + 2*y)
+    model.add_multiplication_equality(h, j, z)
+
+    model.add(h + 3 * z == a)
 
     model.maximize(a)
 

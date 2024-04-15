@@ -1,7 +1,7 @@
-from typing import Generic, Optional, TypeVar, Callable
+from typing import Generic, NamedTuple, Optional, TypeVar, Callable
 from uuid import UUID
 
-from ortools.sat.python.cp_model import IntVar, CpModel, CpSolver, LinearExprT, BoundedLinearExprT, CpSolverSolutionCallback, BoundedLinearExpression, LinearExpr
+from ortools.sat.python.cp_model import IntVar, CpModel, CpSolver, LinearExprT, BoundedLinearExprT, CpSolverSolutionCallback, BoundedLinearExpression, LinearExpr, Domain, INT32_MIN, INT32_MAX
 import ortools.sat.python.cp_model as cp_model
 
 
@@ -12,6 +12,7 @@ class RemoteClpResultSolutionCallback(CpSolverSolutionCallback):
         self.json_dict = []
 
     def on_solution_callback(self):
+        print('Solution found')
         res = {}
         for var in self.__variables:
             res[str(var)] = self.Value(var)
@@ -28,35 +29,42 @@ class BTNode(Generic[T]):
         self.right = right
 
 
-OperatorType = Callable[[LinearExprT, LinearExprT],
-                        LinearExprT | BoundedLinearExprT]
-ConstraintNodeType = OperatorType | int | UUID
+class Operator(NamedTuple):
+    operator: str
+    callable: Optional[Callable[[LinearExprT, LinearExprT], LinearExprT]]
 
 
-def parse_operator(op: str) -> OperatorType:
+ConstraintNodeType = Operator | int | UUID
+
+
+def parse_operator(op: str) -> Operator:
     match op:
         case '+':
-            return lambda x, y: x + y
+            def c(x, y): return x + y
         case '-':
-            return lambda x, y: x - y
-        case '*':
-            return lambda x, y: x * y
-        # case '/':
-        #    return lambda x, y: x // y
+            def c(x, y): return x - y
         case '<':
-            return lambda x, y: x < y
+            def c(x, y): return x < y
         case '<=':
-            return lambda x, y: x <= y
+            def c(x, y): return x <= y
         case '>':
-            return lambda x, y: x > y
+            def c(x, y): return x > y
         case '>=':
-            return lambda x, y: x >= y
+            def c(x, y): return x >= y
         case '==':
-            return lambda x, y: x == y
+            def c(x, y): return x == y
         case '!=':
-            return lambda x, y: x != y
+            def c(x, y): return x != y
+        case '*':
+            def c(x, y): return x * y
+        case '//':
+            def c(x, y): return x // y
+        case 'mod':
+            def c(x, y): return x % y
         case _:
             raise ValueError(f'Invalid operator: {op}')
+
+    return Operator(op, c)
 
 
 def parse_ast(ast: dict) -> BTNode[ConstraintNodeType]:
@@ -83,14 +91,56 @@ def parse_ast(ast: dict) -> BTNode[ConstraintNodeType]:
     return root
 
 
-def parse_linear_expression(ast: dict, variables: dict[UUID, IntVar]):
+def process_arithmetic_expression(model: CpModel, ast: dict, variables: dict[UUID, IntVar]):
     root = parse_ast(ast)
 
     def inner(node: BTNode[ConstraintNodeType]) -> LinearExprT | BoundedLinearExprT:
-        if callable(node.data):
+        if isinstance(node.data, Operator):
             left = inner(node.left)
             right = inner(node.right)
-            return node.data(left, right)
+
+            if node.data.operator == 'mod' and (isinstance(left, LinearExpr) or isinstance(right, LinearExpr)):
+                var = model.NewIntVar(INT32_MIN, INT32_MAX, '')
+                if not isinstance(left, IntVar):
+                    tmp = model.NewIntVar(INT32_MIN, INT32_MAX, '')
+                    model.add(tmp == left)
+                    left = tmp
+                if not isinstance(right, IntVar):
+                    tmp = model.NewIntVar(1, INT32_MAX, '')
+                    model.add(tmp == right)
+                    right = tmp
+                model.add_modulo_equality(var, left, right)
+                return var
+
+            if node.data.operator == '//' and (isinstance(left, LinearExpr) or isinstance(right, LinearExpr)):
+                var = model.new_int_var(INT32_MIN, INT32_MAX, '')
+                if not isinstance(left, IntVar):
+                    tmp = model.new_int_var(INT32_MIN, INT32_MAX, '')
+                    model.add(tmp == left)
+                    left = tmp
+                if not isinstance(right, IntVar):
+                    tmp = model.new_int_var_from_domain(
+                        Domain.from_intervals([[INT32_MIN, -1], [1, INT32_MAX]]), '')
+                    model.add(tmp != 0)
+                    model.add(tmp == right)
+                    right = tmp
+                model.add_division_equality(var, left, right)
+                return var
+
+            if node.data.operator == '*' and (isinstance(left, LinearExpr) and isinstance(right, LinearExpr)):
+                if not isinstance(left, IntVar):
+                    tmp = model.new_int_var(INT32_MIN, INT32_MAX, '')
+                    model.add(tmp == left)
+                    left = tmp
+                if not isinstance(right, IntVar):
+                    tmp = model.new_int_var(INT32_MIN, INT32_MAX, '')
+                    model.add(tmp == right)
+                    right = tmp
+                var = model.new_int_var(INT32_MIN, INT32_MAX, '')
+                model.add_multiplication_equality(var, left, right)
+                return var
+
+            return node.data.callable(left, right)
         elif isinstance(node.data, int):
             return node.data
         elif isinstance(node.data, UUID):
@@ -108,19 +158,23 @@ def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
 
     for var in json_data['variables']:
         var_id = UUID(var['id'])
-        var_ub = int(var['ub']) if 'ub' in var else cp_model.INT32_MAX
-        var_lb = int(var['lb']) if 'lb' in var else cp_model.INT32_MIN
+        var_ub = int(var['ub']) if 'ub' in var else INT32_MAX
+        var_lb = int(var['lb']) if 'lb' in var else INT32_MIN
         var = model.new_int_var(var_lb, var_ub, str(var_id))
         variables[var_id] = var
 
     for constraint in json_data['constraints']:
         constraint_id = UUID(constraint['id'])
         match constraint['type']:
-            case 'linear':
-                expr = parse_linear_expression(constraint['value'], variables)
+            case 'arithmetic':
+                expr = process_arithmetic_expression(
+                    model, constraint['value'], variables)
                 assert isinstance(
                     expr, BoundedLinearExpression) or isinstance(expr, bool)
                 constraint = model.add(expr).with_name(str(constraint_id))
+            case 'all_different':
+                vars = [variables[UUID(var)] for var in constraint['value']]
+                constraint = model.add_all_different(vars)
             case _:
                 raise ValueError('Invalid constraint type')
 
@@ -167,7 +221,7 @@ if __name__ == '__main__':
     with open('model.json', 'r') as f:
         model, vars = parse_model(f.read())
         solver = CpSolver()
-        solver.parameters.enumerate_all_solutions = True
+        # solver.parameters.enumerate_all_solutions = True
 
         status = solver.solve(model, RemoteClpResultSolutionCallback(vars))
 

@@ -34,12 +34,14 @@
     (ins)/2,
     api_config/1,
     fd_var/1,
+    labeling/2,
     label/1,
-    labeling/2
+    all_different/1
 ]).
 
 :- use_module(library(uuid)).
 :- use_module(library(settings)).
+:- use_module(library(lists)).
 :- use_module(library(http/http_client)).
 :- use_module(library(http/http_json)).
 
@@ -79,10 +81,9 @@ put_remote_clp_attr(Var, Uuid, Lb, Ub) :-
     put_attr(Var, remote_clp, var(Uuid, Lb, Ub)).
 
 
-% parse_vars(+Vars, -VarsDict)
+% parse_vars(+VarsAttr, -VarsDict)
 parse_vars([], []).
-parse_vars([Var|Ls1], [Json|Ls2]) :-
-    get_remote_clp_attr(Var, Uuid, Lb, Ub),
+parse_vars([var(Uuid,Lb,Ub)|Ls1], [Json|Ls2]) :-
     uuid_property(Uuid, version(4)),
     JsonAttrs = [id=Uuid],
     (Lb = inf -> JsonAttrs1 = JsonAttrs ; JsonAttrs1 = [lb=Lb|JsonAttrs]),
@@ -91,33 +92,100 @@ parse_vars([Var|Ls1], [Json|Ls2]) :-
     parse_vars(Ls1, Ls2).
 
 
-% get_constraints(-Constraints)
-get_constraints(Constraints) :-
-    nb_getval(constraints, Constraints).
+vars_to_vars_attr([], []).
+vars_to_vars_attr([Var|Vars], [var(Uuid, Lb, Ub)|VarsAttr]) :-
+    get_remote_clp_attr(Var, Uuid, Lb, Ub),
+    vars_to_vars_attr(Vars, VarsAttr).
+
+vars_to_uuids([], []).
+vars_to_uuids([Var|Vars], [Uuid|Uuids]) :-
+    get_remote_clp_attr(Var, Uuid, _, _),
+    vars_to_uuids(Vars, Uuids).
+
+% constraints_for_vars(+Vars, -Constraints, -InvolvedVarsAttr)
+constraints_for_vars_aux(_, [], [], []).
+constraints_for_vars_aux(VarsAttr, Constraints, InvolvedVarsAttr, [ConstraintTerm|AllConstraints]) :-
+    ConstraintTerm = constraint(Constraint, InvolvedVarsAttr1),
+    intersection(VarsAttr, InvolvedVarsAttr1, SharedVarsAttr),
+    (SharedVarsAttr = [] ->
+        (Constraints = Constraints1,
+        NewInvolvedVarsAttr = []) ;
+        (Constraints = [Constraint|Constraints1],
+        NewInvolvedVarsAttr = InvolvedVarsAttr1)),
+    constraints_for_vars_aux(VarsAttr, Constraints1, InvolvedVarsAttr2, AllConstraints),
+    union(VarsAttr, NewInvolvedVarsAttr, InvolvedVarsAttr3),
+    union(InvolvedVarsAttr2, InvolvedVarsAttr3, InvolvedVarsAttr).
+
+constraints_for_vars(Vars, Constraints, InvolvedVarsAttr) :-
+    nb_getval(constraints, AllConstraints),
+    vars_to_vars_attr(Vars, VarsAttr),
+    list_to_set(VarsAttr, VarsAttrSet),
+    constraints_for_vars_aux(VarsAttrSet, Constraints, InvolvedVarsAttr, AllConstraints).
 
 
-% add_constraint(+Constraint)
-add_constraint(Constraint) :-
+% clear_constraints_for_vars(+Vars)
+clear_constraints_for_vars_aux(_, [], []).
+clear_constraints_for_vars_aux(VarsAttr, [Constraint|Constraints], RemainingConstraints) :-
+    Constraint = constraint(_, InvolvedVarsAttr),
+    clear_constraints_for_vars_aux(VarsAttr, Constraints, RemainingConstraints1),
+    (intersection(VarsAttr, InvolvedVarsAttr, []) ->
+        RemainingConstraints = [Constraint|RemainingConstraints1];
+        RemainingConstraints = RemainingConstraints1).
+
+clear_constraints_for_vars(Vars) :-
+    nb_getval(constraints, AllConstraints),
+    vars_to_vars_attr(Vars, VarsAttr),
+    clear_constraints_for_vars_aux(VarsAttr, AllConstraints, RemainingConstraints),
+    nb_setval(constraints, RemainingConstraints).
+
+
+% add_constraint(+Constraint, +InvolvedVarsAttr)
+add_constraint(Constraint, InvolvedVarsAttr) :-
     % CAUTION: nb does not work with backtracking
     nb_getval(constraints, Constraints),
-    nb_setval(constraints, [Constraint|Constraints]).
+    nb_setval(constraints, [constraint(Constraint, InvolvedVarsAttr)|Constraints]).
 
 
-% parse_expr(+Expr, -ParsedExpr)
-parse_expr(Var, Res) :-
+% parse_expr(+Expr, -ParsedExpr, -InvolvedVarUuids)
+parse_expr(Var, Res, [var(Uuid, Lb, Ub)]) :-
     fd_var(Var),
-    get_remote_clp_attr(Var, Uuid, _, _),
+    get_remote_clp_attr(Var, Uuid, Lb, Ub),
     Res = json([type=variable, value=Uuid]).
-parse_expr(Literal, Res) :-
+parse_expr(Literal, Res, []) :-
     integer(Literal),
     Res = json([type=literal, value=Literal]).
-parse_expr(Expr, ParsedExpr) :-
+parse_expr(Expr, ParsedExpr, VarUuids) :-
     nonvar(Expr),
     Expr =.. [Op, A, B],
-    member(Op, ['+', '-', '*']),
-    parse_expr(A, ParsedA),
-    parse_expr(B, ParsedB),
+    member(Op, ['+', '-', '*', '//', 'mod']),
+    parse_expr(A, ParsedA, VarUuidsA),
+    parse_expr(B, ParsedB, VarUuidsB),
+    union(VarUuidsA, VarUuidsB, VarUuids),
     ParsedExpr = json([type=operator, value=Op, children=[ParsedA, ParsedB]]).
+
+
+% add_arithmetic_constraint(+Op, +A, +B)
+add_arithmetic_constraint(Op, A, B) :-
+    ((var(A), \+ fd_var(A)) ->
+        A in inf..sup ;
+        true),
+    ((var(B), \+ fd_var(B)) ->
+        B in inf..sup ;
+        true),
+
+    parse_expr(A, ParsedA, VarsA),
+    parse_expr(B, ParsedB, VarsB),
+    union(VarsA, VarsB, Vars),
+
+    uuid(Uuid, [version(4)]),
+    ParsedExpr = json([
+        id=Uuid,
+        type=arithmetic,
+        value=json([
+            type=operator,
+            value=Op,
+            children=[ParsedA, ParsedB]])]),
+    add_constraint(ParsedExpr, Vars).
 
 
 % parse_objectives(+Options, -Objectives)
@@ -128,21 +196,6 @@ parse_objectives([Option|Options], [Objective|Objectives]) :-
     get_remote_clp_attr(Var, Uuid, _, _),
     Objective = json([value=Uuid, type=Op]),
     parse_objectives(Options, Objectives).
-
-
-% add_arithmetic_constraint(+Op, +A, +B)
-add_arithmetic_constraint(Op, A, B) :-
-    parse_expr(A, ParsedA),
-    parse_expr(B, ParsedB),
-    uuid(Uuid, [version(4)]),
-    ParsedExpr = json([
-        id=Uuid,
-        type=linear,
-        value=json([
-            type=operator,
-            value=Op,
-            children=[ParsedA, ParsedB]])]),
-    add_constraint(ParsedExpr).
 
 
 % check_status(+StatusUrl, -Results)
@@ -193,11 +246,10 @@ fd_var(Var) :- get_remote_clp_attr(Var, _, _, _).
 
 % labeling(+Options, +Vars)
 labeling(Options, Vars) :-
-    parse_vars(Vars, VarsJson),
-    
-    get_constraints(Constraints),
-    % TODO: clear constraints ?
-    nb_setval(constraints, []),
+    constraints_for_vars(Vars, Constraints, InvolvedVarsAttr),
+
+    parse_vars(InvolvedVarsAttr, VarsJson),
+    parse_objectives(Options, Obj),
 
     uuid(Uuid, [version(4)]),
     JsonAttrs = [id=Uuid, variables=VarsJson, constraints=Constraints],
@@ -209,10 +261,12 @@ labeling(Options, Vars) :-
     Json = json(JsonAttrs1),
     http_solve(Json, Solutions),
 
+    clear_constraints_for_vars(Vars),
+
     member(json(SolutionVars), Solutions),
     unify_solution1(SolutionVars, Vars).
 
-% label(+Vars)
+% labeling(+Vars)
 label(Vars) :- labeling([], Vars).
 
 
@@ -231,16 +285,17 @@ Var in Lb .. Ub :-
     Vars ins Lb .. Ub.
 
 
+% all_different(+Vars)
+all_different(Vars) :-
+    vars_to_vars_attr(Vars, VarsAttr),
+    vars_to_uuids(Vars, Uuids),
+    uuid(Uuid, [version(4)]),
+    Json = json([id=Uuid, type=all_different, value=Uuids]),
+    add_constraint(Json, VarsAttr).
+
+
 % +Var #= +Expr
-A #= B :-
-    ((var(A), \+ (var(B), fd_var(B))) ->
-        A in inf..sup ;
-        true),
-    ((var(B), \+ (var(A), fd_var(A))) ->
-        B in inf..sup ;
-        true),
-    
-    add_arithmetic_constraint(==, A, B).
+A #= B :- add_arithmetic_constraint(==, A, B).
 % +Var #\= +Expr
 A #\= B :- add_arithmetic_constraint('!=', A, B).
 % +Var #> +Expr
