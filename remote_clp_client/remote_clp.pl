@@ -66,8 +66,8 @@ api_config([url(URL)|Ls]) :-
 
 % valid_domain(+Lb, +Ub)
 valid_domain(Lb, Ub) :-
-    integer(Lb) ; Lb = inf,
-    integer(Ub) ; Ub = sup.
+    (integer(Lb) ; Lb = inf),
+    (integer(Ub) ; Ub = sup).
 
 
 % get_remote_clp_attr(+Var, -Uuid, -Ub, -Lb)
@@ -232,12 +232,12 @@ http_solve(Json, Data) :-
 
 
 % unify_solution(+JsonVars, +Vars)
-unify_solution1(_, []).
-unify_solution1(JsonVars, [Var|Vars]) :-
+unify_solution(_, []).
+unify_solution(JsonVars, [Var|Vars]) :-
     get_remote_clp_attr(Var, Uuid, _, _),
     member('='(Uuid, Val), JsonVars),
     Var = Val,
-    unify_solution1(JsonVars, Vars).
+    unify_solution(JsonVars, Vars).
 
 
 % fd_var(+Var)
@@ -264,7 +264,7 @@ labeling(Options, Vars) :-
     clear_constraints_for_vars(Vars),
 
     member(json(SolutionVars), Solutions),
-    unify_solution1(SolutionVars, Vars).
+    unify_solution(SolutionVars, Vars).
 
 % labeling(+Vars)
 label(Vars) :- labeling([], Vars).
