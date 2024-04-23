@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: remote-clp-job-dispatcher
+spec:
+  rules:
+    - host: remote-clp.kube.isc.heia-fr.ch
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: remote-clp-job-dispatcher
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - remote-clp.kube.isc.heia-fr.ch
+

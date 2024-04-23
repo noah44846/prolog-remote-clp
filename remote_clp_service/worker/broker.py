@@ -29,9 +29,9 @@ def broker_configuration() -> BrokerConfiguration:
     user = os.environ.get('RABBITMQ_USER', 'guest')
     password = os.environ.get('RABBITMQ_PASSWORD', 'guest')
     url = f'amqp://{user}:{password}@{host}:{port}/'
-    jobs_channel_name = os.environ.get('RABBITMQ_JOBS_CHANNEL', 'rclp-jobs')
+    jobs_channel_name = os.environ.get('RABBITMQ_JOBS_CHANNEL', 'remote-clp-jobs')
     status_channel_name = os.environ.get(
-        'RABBITMQ_STATUS_CHANNEL', 'rclp-status')
+        'RABBITMQ_STATUS_CHANNEL', 'remote-clp-status')
     con = URLParameters(url)
     return BrokerConfiguration(pika_config=con, jobs_channel_name=jobs_channel_name, status_channel_name=status_channel_name)
 

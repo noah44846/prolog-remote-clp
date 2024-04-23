@@ -14,8 +14,8 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_JOBS_QUEUE=rclp-jobs
-      - RABBITMQ_STATUS_QUEUE=rclp-status
+      - RABBITMQ_JOBS_QUEUE=remote-clp-jobs
+      - RABBITMQ_STATUS_QUEUE=remote-clp-status
 
   worker:
     build: ./remote_clp_service/worker
@@ -29,8 +29,8 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_JOBS_QUEUE=rclp-jobs
-      - RABBITMQ_STATUS_QUEUE=rclp-status
+      - RABBITMQ_JOBS_QUEUE=remote-clp-jobs
+      - RABBITMQ_STATUS_QUEUE=remote-clp-status
 
   rabbitmq:
     image: rabbitmq:3-management-alpine

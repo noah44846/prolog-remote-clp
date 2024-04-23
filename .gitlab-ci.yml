@@ -1,0 +1,33 @@
+stages:
+  - build
+  - deploy
+
+build-images:
+  stage: build 
+  image: docker:24.0.3
+  services:
+    - docker:24.0.3-dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE/job_dispatcher:latest -f remote_clp_service/job_dispatcher/Dockerfile remote_clp_service/job_dispatcher
+    - docker build -t $CI_REGISTRY_IMAGE/worker:latest -f remote_clp_service/worker/Dockerfile remote_clp_service/worker
+    - docker push $CI_REGISTRY_IMAGE/job_dispatcher:latest
+    - docker push $CI_REGISTRY_IMAGE/worker:latest
+
+k8s-deploy:
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: [ "" ]
+  stage: deploy
+  needs:
+    - build-images
+  script:
+    - echo "Deploying application to K8s..."
+    - kubectl config set-cluster local --server="https://rancher.kube.isc.heia-fr.ch/k8s/clusters/local"
+    - kubectl config set-credentials local --token="$KUBE_TOKEN"
+    - kubectl config set-context local --user=local --cluster=local
+    - kubectl config use-context local
+    - kubectl -n remote-clp apply -f ./kubeconfig
+    - kubectl -n remote-clp rollout restart deploy remote-clp-job-dispatcher remote-clp-worker
+    - echo "Application successfully deployed."
+

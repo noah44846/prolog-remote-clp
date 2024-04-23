@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: remote-clp-job-dispatcher
+  labels:
+    app: remote-clp-job-dispatcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: remote-clp-job-dispatcher
+  template:
+    metadata:
+      labels:
+        app: remote-clp-job-dispatcher 
+    spec:
+      containers:
+        - image: registry.forge.hefr.ch/frederic.bapst/24-ps6-remote-clp/job_dispatcher:latest
+          env:
+            - name: PORT
+              value: "3000"
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: RABBITMQ_USER
+              value: "guest"
+            - name: RABBITMQ_PASSWORD
+              value: "guest"
+            - name: RABBITMQ_JOBS_QUEUE
+              value: "remote-clp-jobs"
+            - name: RABBITMQ_STATUS_QUEUE
+              value: "remote-clp-status"
+          name: job-dispatcher
+          ports:
+            - containerPort: 3000
+      imagePullSecrets:
+        - name: registry-secret
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: remote-clp-worker
+  labels:
+    app: remote-clp-worker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: remote-clp-worker
+  template:
+    metadata:
+      labels:
+        app: remote-clp-worker
+    spec:
+      containers:
+        - image: registry.forge.hefr.ch/frederic.bapst/24-ps6-remote-clp/worker:latest
+          env:
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: RABBITMQ_USER
+              value: "guest"
+            - name: RABBITMQ_PASSWORD
+              value: "guest"
+            - name: RABBITMQ_JOBS_QUEUE
+              value: "remote-clp-jobs"
+            - name: RABBITMQ_STATUS_QUEUE
+              value: "remote-clp-status"
+          name: worker
+          ports:
+            - containerPort: 3000
+      imagePullSecrets:
+        - name: registry-secret
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-alpine
+          ports:
+            - containerPort: 5672
+

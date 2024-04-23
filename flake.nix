@@ -24,6 +24,8 @@
           python311Packages.numpy
           python311Packages.pika
           python311Packages.mypy
+
+          kubectl
         ];
 
         GIT_CONFIG_GLOBAL =
