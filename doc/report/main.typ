@@ -420,6 +420,13 @@ TODO sequence diagram
 
 TODO
 
+TODO add details about the solver and its settings (maybe in conception ??):    
+- solver limit on model with objective
+- only one objective
+- ressource leak of Constraints
+- automatic cleaning and correct selecting of constraints and variables
+- details of how the multiplication works
+
 = Results
 
 = Conclusion

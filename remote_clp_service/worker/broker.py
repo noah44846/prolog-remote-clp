@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import json
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 from enum import Enum
 from uuid import UUID
 
@@ -29,7 +29,8 @@ def broker_configuration() -> BrokerConfiguration:
     user = os.environ.get('RABBITMQ_USER', 'guest')
     password = os.environ.get('RABBITMQ_PASSWORD', 'guest')
     url = f'amqp://{user}:{password}@{host}:{port}/'
-    jobs_channel_name = os.environ.get('RABBITMQ_JOBS_CHANNEL', 'remote-clp-jobs')
+    jobs_channel_name = os.environ.get(
+        'RABBITMQ_JOBS_CHANNEL', 'remote-clp-jobs')
     status_channel_name = os.environ.get(
         'RABBITMQ_STATUS_CHANNEL', 'remote-clp-status')
     con = URLParameters(url)
@@ -44,7 +45,7 @@ class RclpJobStatus(Enum):
     DONE = 'done'
 
 
-def publish_status(ch, job_id: UUID, status: RclpJobStatus, result: dict = None, error: str = None):
+def publish_status(ch, job_id: UUID, status: RclpJobStatus, result: Optional[list[dict[str, int]]] | None = None, error: Optional[str] = None):
     message = {'id': str(job_id), 'status': status.value,
                'data': result, 'error': error}
     ch.basic_publish(

@@ -1,48 +1,46 @@
 {
-  description = "Nix shell for java project";
+  description = "A very basic flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs }:
-    let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs { system = system; config.allowUnfree = true; };
-    in
-    {
-      devShells.${system}.default = pkgs.mkShellNoCC {
-        packages = with pkgs; [
-          swiProlog
-          mermaid-cli
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
+      in rec {
+        flakedPkgs = pkgs;
 
-          go
-          gcc
-          go-tools
+        devShell = pkgs.mkShell {
+          packages = with pkgs; [
+            swiProlog
+            mermaid-cli
 
-          pyright
-          python311Packages.numpy
-          python311Packages.pika
-          python311Packages.mypy
+            go
+            #gcc
+            go-tools
+            air
 
-          kubectl
-        ];
+            pyright
+            python311Packages.mypy
+            nodePackages.nodemon
 
-        GIT_CONFIG_GLOBAL =
-          pkgs.writeText
-            "git.conf"
-            ''
-              [user]
-                  email = "noah.godel@edu.hefr.ch"
-                  name = "Noah Godel"
-            ''
-        ;
+            kubectl
+          ];
 
-        shellHook = ''
-          alias python='./venv/bin/python3.11'
-          alias pip='./venv/bin/pip3.11'
-          alias mypy='./venv/bin/mypy --python-executable=./venv/bin/python3.11'
-        '';
-      }; 
-    };
+          LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib";
+
+          GIT_CONFIG_GLOBAL =
+            pkgs.writeText
+              "git.conf"
+              ''
+                [user]
+                    email = "noah.godel@edu.hefr.ch"
+                    name = "Noah Godel"
+              ''
+          ;
+        }; 
+      }
+    );
 }

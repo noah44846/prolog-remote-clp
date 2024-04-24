@@ -1,29 +1,43 @@
-from typing import Generic, NamedTuple, Optional, TypeVar, Callable
+import json
+from typing import Any, Generic, NamedTuple, Optional, TypeVar, Callable
 from uuid import UUID
 
-from ortools.sat.python.cp_model import IntVar, CpModel, CpSolver, LinearExprT, BoundedLinearExprT, CpSolverSolutionCallback, BoundedLinearExpression, LinearExpr, Domain, INT32_MIN, INT32_MAX
+from ortools.sat.python.cp_model import IntVar, CpModel, CpSolver, BoundedLinearExpression, LinearExpr, INT32_MIN, INT32_MAX
 import ortools.sat.python.cp_model as cp_model
 
 
-class RemoteClpResultSolutionCallback(CpSolverSolutionCallback):
+class SolutionCallback(cp_model.CpSolverSolutionCallback):
     def __init__(self, variables: list[IntVar]):
-        CpSolverSolutionCallback.__init__(self)
+        cp_model.CpSolverSolutionCallback.__init__(self)
         self.__variables = variables
-        self.json_dict = []
+        self.json_dict: list[dict[str, int]] = []
+        self.solution_count = 0
+
+    def set_solution_limit(self, limit: int):
+        self.solution_limit = limit
 
     def on_solution_callback(self):
-        print('Solution found')
         res = {}
         for var in self.__variables:
             res[str(var)] = self.Value(var)
         self.json_dict.append(res)
+
+        self.solution_count += 1
+        if hasattr(self, 'solution_limit') and self.solution_count >= self.solution_limit:
+            self.StopSearch()
+
+    def solution_from_solver(self, solver: CpSolver) -> dict[str, int]:
+        res = {}
+        for var in self.__variables:
+            res[str(var)] = solver.Value(var)
+        return res
 
 
 T = TypeVar('T')
 
 
 class BTNode(Generic[T]):
-    def __init__(self, data: T, left: Optional[T] = None, right: Optional[T] = None):
+    def __init__(self, data: T, left: Optional['BTNode[T]'] = None, right: Optional['BTNode[T]'] = None):
         self.data = data
         self.left = left
         self.right = right
@@ -31,7 +45,8 @@ class BTNode(Generic[T]):
 
 class Operator(NamedTuple):
     operator: str
-    callable: Optional[Callable[[LinearExprT, LinearExprT], LinearExprT]]
+    callable: Callable[[cp_model.LinearExprT,
+                        cp_model.LinearExprT], cp_model.LinearExprT | cp_model.BoundedLinearExprT]
 
 
 ConstraintNodeType = Operator | int | UUID
@@ -67,37 +82,38 @@ def parse_operator(op: str) -> Operator:
     return Operator(op, c)
 
 
-def parse_ast(ast: dict) -> BTNode[ConstraintNodeType]:
-    root: BTNode[ConstraintNodeType] = BTNode(ast)
-    nodes = [root]
-    while nodes:
-        node = nodes.pop()
-        match node.data['type']:
+def parse_ast(ast: dict[str, Any]) -> BTNode[ConstraintNodeType]:
+    def inner(node: dict[str, Any]) -> BTNode[ConstraintNodeType]:
+        match node['type']:
             case 'operator':
-                left = node.data['children'][0]
-                right = node.data['children'][1]
-                left_node = BTNode(left)
-                right_node = BTNode(right)
-                node.left = left_node
-                node.right = right_node
-                nodes.append(left_node)
-                nodes.append(right_node)
-                node.data = parse_operator(node.data['value'])
+                left = node['children'][0]
+                right = node['children'][1]
+                left_node = inner(left)
+                right_node = inner(right)
+                return BTNode(parse_operator(node['value']), left_node, right_node)
             case 'variable':
-                node.data = UUID(node.data['value'])
+                return BTNode(UUID(node['value']))
             case 'literal':
-                node.data = int(node.data['value'])
+                return BTNode(int(node['value']))
+            case _:
+                raise ValueError('Invalid node type')
 
-    return root
+    return inner(ast)
 
 
 def process_arithmetic_expression(model: CpModel, ast: dict, variables: dict[UUID, IntVar]):
     root = parse_ast(ast)
 
-    def inner(node: BTNode[ConstraintNodeType]) -> LinearExprT | BoundedLinearExprT:
+    def inner(node: BTNode[ConstraintNodeType]) -> cp_model.LinearExprT | cp_model.BoundedLinearExprT:
         if isinstance(node.data, Operator):
+            if node.left is None or node.right is None:
+                raise ValueError('Invalid expression')
+
             left = inner(node.left)
             right = inner(node.right)
+
+            if isinstance(left, BoundedLinearExpression) or isinstance(left, bool) or isinstance(right, BoundedLinearExpression) or isinstance(right, bool):
+                raise ValueError('Invalid expression')
 
             if node.data.operator == 'mod' and (isinstance(left, LinearExpr) or isinstance(right, LinearExpr)):
                 var = model.NewIntVar(INT32_MIN, INT32_MAX, '')
@@ -120,7 +136,7 @@ def process_arithmetic_expression(model: CpModel, ast: dict, variables: dict[UUI
                     left = tmp
                 if not isinstance(right, IntVar):
                     tmp = model.new_int_var_from_domain(
-                        Domain.from_intervals([[INT32_MIN, -1], [1, INT32_MAX]]), '')
+                        cp_model.Domain.from_intervals([[INT32_MIN, -1], [1, INT32_MAX]]), '')
                     model.add(tmp != 0)
                     model.add(tmp == right)
                     right = tmp
@@ -145,14 +161,17 @@ def process_arithmetic_expression(model: CpModel, ast: dict, variables: dict[UUI
             return node.data
         elif isinstance(node.data, UUID):
             return variables[node.data]
+        else:
+            raise ValueError('Invalid node type')
 
     return inner(root)
 
 
-def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
+def parse_model(json_data: dict) -> tuple[CpModel, CpSolver, SolutionCallback]:
     model = CpModel()
     model_id = UUID(json_data['id'])
     model.name = str(model_id)
+    solver = CpSolver()
 
     variables: dict[UUID, IntVar] = {}
 
@@ -162,6 +181,8 @@ def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
         var_lb = int(var['lb']) if 'lb' in var else INT32_MIN
         var = model.new_int_var(var_lb, var_ub, str(var_id))
         variables[var_id] = var
+
+    solution_callback = SolutionCallback(list(variables.values()))
 
     for constraint in json_data['constraints']:
         constraint_id = UUID(constraint['id'])
@@ -178,37 +199,42 @@ def parse_model(json_data: dict) -> tuple[CpModel, list[IntVar]]:
             case _:
                 raise ValueError('Invalid constraint type')
 
-    if 'objectives' in json_data:
-        objectives = json_data['objectives']
-        for objective in objectives:
-            var = variables[UUID(objective['value'])]
-        match objective['type']:
-            case 'min':
-                model.minimize(var)
-            case 'max':
-                model.maximize(var)
+    if 'options' in json_data:
+        options = json_data['options']
+        objective_methods = {
+            'min': model.minimize,
+            'max': model.maximize
+        }
+        for option in options:
+            match option['type']:
+                case 'min' | 'max':
+                    if model.has_objective():
+                        raise ValueError('Multiple objectives')
+                    var = variables[UUID(option['value'])]
+                    objective_methods[option['type']](var)
+                case 'solution_limit':
+                    solution_callback.set_solution_limit(int(option['value']))
+                case 'time_limit':
+                    millis: int = option['value']
+                    solver.parameters.max_time_in_seconds = millis / 1000
+                case _:
+                    raise ValueError('Invalid option type')
 
-    return model, variables.values()
+    if (not model.has_objective()):
+        solver.parameters.enumerate_all_solutions = True
+
+    return model, solver, solution_callback
 
 
-def solve_job(json_data: dict) -> dict:
-    model, vars = parse_model(json_data)
-    solver = CpSolver()
-
-    solver.parameters.enumerate_all_solutions = True
-    # if (not model.has_objective()):
-    #     solver.parameters.enumerate_all_solutions = True
-
-    solution_callback = RemoteClpResultSolutionCallback(vars)
+def solve_job(json_data: dict) -> list[dict[str, int]]:
+    model, solver, solution_callback = parse_model(json_data)
     status = solver.solve(model, solution_callback)
 
     match status:
         case cp_model.OPTIMAL | cp_model.FEASIBLE:
+            # the callback can get multiple solutions but we only need the one with the best objective value
             if model.has_objective():
-                res = {}
-                for var in vars:
-                    res[str(var)] = solver.Value(var)
-                return [res]
+                return [solution_callback.solution_from_solver(solver)]
 
             return solution_callback.json_dict
         case cp_model.MODEL_INVALID:
@@ -218,14 +244,6 @@ def solve_job(json_data: dict) -> dict:
 
 
 if __name__ == '__main__':
-    with open('model.json', 'r') as f:
-        model, vars = parse_model(f.read())
-        solver = CpSolver()
-        # solver.parameters.enumerate_all_solutions = True
-
-        status = solver.solve(model, RemoteClpResultSolutionCallback(vars))
-
-        if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-            pass
-        else:
-            print('No solution found.')
+    data = json.loads('model.json')
+    res = solve_job(data)
+    print(res)

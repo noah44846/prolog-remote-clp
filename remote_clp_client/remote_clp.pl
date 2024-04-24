@@ -81,15 +81,15 @@ put_remote_clp_attr(Var, Uuid, Lb, Ub) :-
     put_attr(Var, remote_clp, var(Uuid, Lb, Ub)).
 
 
-% parse_vars(+VarsAttr, -VarsDict)
-parse_vars([], []).
-parse_vars([var(Uuid,Lb,Ub)|Ls1], [Json|Ls2]) :-
+% serialize_vars(+VarsAttr, -VarsDict)
+serialize_vars([], []).
+serialize_vars([var(Uuid,Lb,Ub)|Ls1], [Json|Ls2]) :-
     uuid_property(Uuid, version(4)),
     JsonAttrs = [id=Uuid],
     (Lb = inf -> JsonAttrs1 = JsonAttrs ; JsonAttrs1 = [lb=Lb|JsonAttrs]),
     (Ub = sup -> JsonAttrs2 = JsonAttrs1 ; JsonAttrs2 = [ub=Ub|JsonAttrs1]),
     Json = json(JsonAttrs2),
-    parse_vars(Ls1, Ls2).
+    serialize_vars(Ls1, Ls2).
 
 
 vars_to_vars_attr([], []).
@@ -146,20 +146,20 @@ add_constraint(Constraint, InvolvedVarsAttr) :-
     nb_setval(constraints, [constraint(Constraint, InvolvedVarsAttr)|Constraints]).
 
 
-% parse_expr(+Expr, -ParsedExpr, -InvolvedVarUuids)
-parse_expr(Var, Res, [var(Uuid, Lb, Ub)]) :-
+% serialize_expr(+Expr, -ParsedExpr, -InvolvedVarUuids)
+serialize_expr(Var, Res, [var(Uuid, Lb, Ub)]) :-
     fd_var(Var),
     get_remote_clp_attr(Var, Uuid, Lb, Ub),
     Res = json([type=variable, value=Uuid]).
-parse_expr(Literal, Res, []) :-
+serialize_expr(Literal, Res, []) :-
     integer(Literal),
     Res = json([type=literal, value=Literal]).
-parse_expr(Expr, ParsedExpr, VarUuids) :-
+serialize_expr(Expr, ParsedExpr, VarUuids) :-
     nonvar(Expr),
     Expr =.. [Op, A, B],
     member(Op, ['+', '-', '*', '//', 'mod']),
-    parse_expr(A, ParsedA, VarUuidsA),
-    parse_expr(B, ParsedB, VarUuidsB),
+    serialize_expr(A, ParsedA, VarUuidsA),
+    serialize_expr(B, ParsedB, VarUuidsB),
     union(VarUuidsA, VarUuidsB, VarUuids),
     ParsedExpr = json([type=operator, value=Op, children=[ParsedA, ParsedB]]).
 
@@ -173,8 +173,8 @@ add_arithmetic_constraint(Op, A, B) :-
         B in inf..sup ;
         true),
 
-    parse_expr(A, ParsedA, VarsA),
-    parse_expr(B, ParsedB, VarsB),
+    serialize_expr(A, ParsedA, VarsA),
+    serialize_expr(B, ParsedB, VarsB),
     union(VarsA, VarsB, Vars),
 
     uuid(Uuid, [version(4)]),
@@ -188,14 +188,25 @@ add_arithmetic_constraint(Op, A, B) :-
     add_constraint(ParsedExpr, Vars).
 
 
-% parse_objectives(+Options, -Objectives)
-parse_objectives([], []).
-parse_objectives([Option|Options], [Objective|Objectives]) :-
+% serialize_options(+Options, -OptionsJson)
+serialize_options([], []).
+serialize_options([Option|Options], [OptionJson|OptionsJson]) :-
     Option =.. [Op, Var],
-    member(Op, ['min', 'max']),
+    member(Op, [min, max]),
+    \+ member(min(_), Options),
+    \+ member(max(_), Options),
     get_remote_clp_attr(Var, Uuid, _, _),
-    Objective = json([value=Uuid, type=Op]),
-    parse_objectives(Options, Objectives).
+    OptionJson = json([value=Uuid, type=Op]),
+    serialize_options(Options, OptionsJson).
+serialize_options([time_limit(H, M, S, MS)|Options], [json([value=Timeout, type=time_limit])|OptionsJson]) :-
+    integer(H), integer(M), integer(S), integer(MS),
+    \+ member(time_limit(_, _, _, _), Options),
+    Timeout is ((H*60 + M) * 60 + S) * 1000 + MS,
+    serialize_options(Options, OptionsJson).
+serialize_options([solution_limit(N)|Options], [json([value=N, type=solution_limit])|OptionsJson]) :-
+    integer(N),
+    \+ member(solution_limit(_), Options),
+    serialize_options(Options, OptionsJson).
 
 
 % check_status(+StatusUrl, -Results)
@@ -248,15 +259,15 @@ fd_var(Var) :- get_remote_clp_attr(Var, _, _, _).
 labeling(Options, Vars) :-
     constraints_for_vars(Vars, Constraints, InvolvedVarsAttr),
 
-    parse_vars(InvolvedVarsAttr, VarsJson),
-    parse_objectives(Options, Obj),
+    serialize_vars(InvolvedVarsAttr, VarsJson),
 
     uuid(Uuid, [version(4)]),
     JsonAttrs = [id=Uuid, variables=VarsJson, constraints=Constraints],
 
     (Options = [] ->
         JsonAttrs1 = JsonAttrs ;
-        (parse_objectives(Options, Obj), JsonAttrs1 = [objectives=Obj|JsonAttrs])),
+        % TODO: rename to serialize
+        (serialize_options(Options, OptionsJson), JsonAttrs1 = [options=OptionsJson|JsonAttrs])),
 
     Json = json(JsonAttrs1),
     http_solve(Json, Solutions),
