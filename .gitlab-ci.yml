@@ -30,4 +30,3 @@ k8s-deploy:
     - kubectl -n remote-clp apply -f ./kubeconfig
     - kubectl -n remote-clp rollout restart deploy remote-clp-job-dispatcher remote-clp-worker
     - echo "Application successfully deployed."
-
