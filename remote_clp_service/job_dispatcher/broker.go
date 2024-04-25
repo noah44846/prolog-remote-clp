@@ -69,7 +69,7 @@ func (c *ConnectionWrapper) startConsuming(jobResultCallback func([]byte)) {
 
 func Connect(config *Config, jobResultCallback func([]byte)) ConnectionWrapper {
 	// Create a new RabbitMQ connection.
-	connectRabbitMQ, err := amqp.Dial(config.AmqpServerURL)
+	connectRabbitMQ, err := amqp.Dial(config.AmqpServerUrl)
 	if err != nil {
 		panic(err)
 	}

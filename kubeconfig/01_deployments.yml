@@ -15,23 +15,21 @@ spec:
         app: remote-clp-job-dispatcher 
     spec:
       containers:
-        - image: registry.forge.hefr.ch/frederic.bapst/24-ps6-remote-clp/job_dispatcher:latest
+        - name: job-dispatcher
+          image: registry.forge.hefr.ch/frederic.bapst/24-ps6-remote-clp/job_dispatcher:latest
+          command: ["/wait-for-it.sh"]
+          args: ["rabbitmq:5672", "-t", "600", "--", "/wait-for-it.sh", "redis:6379", "-t", "600", "--", "/job_dispatcher"]
           env:
             - name: PORT
               value: "3000"
-            - name: RABBITMQ_PORT
-              value: "5672"
-            - name: RABBITMQ_HOST
-              value: "rabbitmq"
-            - name: RABBITMQ_USER
-              value: "guest"
-            - name: RABBITMQ_PASSWORD
-              value: "guest"
+            - name: RABBITMQ_URL
+              value: "amqp://guest:guest@rabbitmq:5672"
             - name: RABBITMQ_JOBS_QUEUE
               value: "remote-clp-jobs"
             - name: RABBITMQ_STATUS_QUEUE
               value: "remote-clp-status"
-          name: job-dispatcher
+            - name: REDIS_URL
+              value: "redis:6379"
           ports:
             - containerPort: 3000
       imagePullSecrets:
@@ -56,21 +54,17 @@ spec:
         app: remote-clp-worker
     spec:
       containers:
-        - image: registry.forge.hefr.ch/frederic.bapst/24-ps6-remote-clp/worker:latest
+        - name: worker
+          image: registry.forge.hefr.ch/frederic.bapst/24-ps6-remote-clp/worker:latest
+          command: ["/wait-for-it.sh"]
+          args: ["rabbitmq:5672", "-t", "600", "--", "python", "app.py"]
           env:
-            - name: RABBITMQ_PORT
-              value: "5672"
-            - name: RABBITMQ_HOST
-              value: "rabbitmq"
-            - name: RABBITMQ_USER
-              value: "guest"
-            - name: RABBITMQ_PASSWORD
-              value: "guest"
+            - name: RABBITMQ_URL
+              value: "amqp://guest:guest@rabbitmq:5672"
             - name: RABBITMQ_JOBS_QUEUE
               value: "remote-clp-jobs"
             - name: RABBITMQ_STATUS_QUEUE
               value: "remote-clp-status"
-          name: worker
           ports:
             - containerPort: 3000
       imagePullSecrets:
@@ -99,4 +93,3 @@ spec:
           image: rabbitmq:3-alpine
           ports:
             - containerPort: 5672
-

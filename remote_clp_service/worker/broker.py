@@ -24,11 +24,7 @@ class BrokerConfiguration(NamedTuple):
 
 
 def broker_configuration() -> BrokerConfiguration:
-    host = os.environ.get('RABBITMQ_HOST', 'localhost')
-    port = os.environ.get('RABBITMQ_PORT', '5672')
-    user = os.environ.get('RABBITMQ_USER', 'guest')
-    password = os.environ.get('RABBITMQ_PASSWORD', 'guest')
-    url = f'amqp://{user}:{password}@{host}:{port}/'
+    url = os.environ.get('RABBITMQ_URL', 'amqp://guest:guest@localhost:5672/')
     jobs_channel_name = os.environ.get(
         'RABBITMQ_JOBS_CHANNEL', 'remote-clp-jobs')
     status_channel_name = os.environ.get(

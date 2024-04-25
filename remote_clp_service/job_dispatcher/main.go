@@ -103,6 +103,8 @@ func main() {
 	// Load configuration.
 	config := GetConfig()
 
+	ExampleClient(&config)
+
 	jobResultMap := JobResultMap{}
 
 	connection := Connect(&config, getJobResponseCallback(&jobResultMap))

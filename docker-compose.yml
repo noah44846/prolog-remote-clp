@@ -1,34 +1,29 @@
-version: "3.2"
 services:
   job-dispatcher:
     build: ./remote_clp_service/job_dispatcher
     container_name: job_dispatcher
-    entrypoint: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "/job_dispatcher"]
+    entrypoint: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "/wait-for-it.sh", "redis:6379", "-t", "600", "--", "/job_dispatcher"]
     depends_on:
       - rabbitmq
+      - redis
     ports:
       - 3000:3000
     environment:
       - PORT=3000
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
       - RABBITMQ_JOBS_QUEUE=remote-clp-jobs
       - RABBITMQ_STATUS_QUEUE=remote-clp-status
+      - REDIS_URL=redis:6379
 
   worker:
     build: ./remote_clp_service/worker
-    command: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "python", "app.py"]
+    entrypoint: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "python", "app.py"]
     deploy:
       replicas: 3
     depends_on:
       - rabbitmq
     environment:
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
       - RABBITMQ_JOBS_QUEUE=remote-clp-jobs
       - RABBITMQ_STATUS_QUEUE=remote-clp-status
 
@@ -42,6 +37,15 @@ services:
         - rabbitmq_data:/var/lib/rabbitmq/
         - rabbitmq_log:/var/log/rabbitmq
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+
 volumes:
   rabbitmq_data:
   rabbitmq_log:
+  redis_data:

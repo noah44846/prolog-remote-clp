@@ -1,32 +1,27 @@
 package main
 
 import (
-	"fmt"
 	"os"
 )
 
 const (
-	DefaultAmqpServerHost     = "localhost"
-	DefaultAmqpServerPort     = "5672"
-	DefaultAmqpServerUser     = "guest"
-	DefaultAmqpServerPassword = "guest"
-	DefaultJobsChannelName    = "remote-clp-jobs"
-	DefaultStatusChannelName  = "remote-clp-status"
-	DefaultApiPort            = "3000"
-	AmqpServerHostEnv         = "RABBITMQ_HOST"
-	AmqpServerPortEnv         = "RABBITMQ_PORT"
-	AmqpServerUserEnv         = "RABBITMQ_USER"
-	AmqpServerPasswordEnv     = "RABBITMQ_PASSWORD"
-	JobsChannelNameEnv        = "RABBITMQ_JOBS_CHANNEL_NAME"
-	StatusChannelNameEnv      = "RABBITMQ_STATUS_CHANNEL_NAME"
-	ApiPortEnv                = "PORT"
-	AmqpServerUrlFormat       = "amqp://%s:%s@%s:%s/"
+	DefaultAmqpServerUrl     = "amqp://guest:guest@localhost:5672/"
+	DefaultJobsChannelName   = "remote-clp-jobs"
+	DefaultStatusChannelName = "remote-clp-status"
+	DefaultRedisUrl          = "localhost:6379"
+	DefaultApiPort           = "3000"
+	AmqpServerUrlEnv         = "RABBITMQ_URL"
+	JobsChannelNameEnv       = "RABBITMQ_JOBS_CHANNEL_NAME"
+	StatusChannelNameEnv     = "RABBITMQ_STATUS_CHANNEL_NAME"
+	RedisUrlEnv              = "REDIS_URL"
+	ApiPortEnv               = "PORT"
 )
 
 type Config struct {
-	AmqpServerURL     string
+	AmqpServerUrl     string
 	JobsChannelName   string
 	StatusChannelName string
+	RedisUrl          string
 	ApiPort           string
 }
 
@@ -39,19 +34,17 @@ func GetConfig() Config {
 		return value
 	}
 
-	amqpServerHost := getEnvOrDefault(AmqpServerHostEnv, DefaultAmqpServerHost)
-	amqpServerPort := getEnvOrDefault(AmqpServerPortEnv, DefaultAmqpServerPort)
-	amqpServerUser := getEnvOrDefault(AmqpServerUserEnv, DefaultAmqpServerUser)
-	amqpServerPassword := getEnvOrDefault(AmqpServerPasswordEnv, DefaultAmqpServerPassword)
-	amqpServerURL := fmt.Sprintf(AmqpServerUrlFormat, amqpServerUser, amqpServerPassword, amqpServerHost, amqpServerPort)
+	amqpServerUrl := getEnvOrDefault(AmqpServerUrlEnv, DefaultAmqpServerUrl)
 	jobsChannelName := getEnvOrDefault(JobsChannelNameEnv, DefaultJobsChannelName)
 	statusChannelName := getEnvOrDefault(StatusChannelNameEnv, DefaultStatusChannelName)
+	redisUrl := getEnvOrDefault(RedisUrlEnv, DefaultRedisUrl)
 	apiPort := getEnvOrDefault(ApiPortEnv, DefaultApiPort)
 
 	return Config{
-		AmqpServerURL:     amqpServerURL,
+		AmqpServerUrl:     amqpServerUrl,
 		JobsChannelName:   jobsChannelName,
 		StatusChannelName: statusChannelName,
+		RedisUrl:          redisUrl,
 		ApiPort:           apiPort,
 	}
 }
