@@ -18,8 +18,9 @@
             mermaid-cli
 
             go
-            #gcc
-            go-tools
+            gotools
+            golangci-lint
+            gopls
             air
 
             pyright
