@@ -46,6 +46,7 @@
 :- use_module(library(http/http_json)).
 
 :- setting(api_url, atom, 'http://localhost:3000', 'URL of the remote CLP server').
+:- setting(api_key, atom, '', 'API key for the remote CLP server').
 
 :- initialization(nb_setval(constraints, [])).
 
@@ -61,6 +62,9 @@ attr_unify_hook(_, _).
 api_config([]).
 api_config([url(URL)|Ls]) :-
     set_setting(api_url, URL),
+    api_config(Ls).
+api_config([key(Key)|Ls]) :-
+    set_setting(api_key, Key),
     api_config(Ls).
 
 
@@ -211,7 +215,8 @@ serialize_options([solution_limit(N)|Options], [json([value=N, type=solution_lim
 
 % check_status(+StatusUrl, -Results)
 check_result(StatusUrl, Data, Error) :-
-    http_get(StatusUrl, json(Ls), []),
+    setting(api_key, Key),
+    http_get(StatusUrl, json(Ls), [authorization(bearer(Key))]),
     member(status=Status, Ls),
     write('job status: '), write(Status), nl,
     Status = done,
@@ -223,13 +228,15 @@ check_result(StatusUrl, Data, Error) :-
 % http_solve(+Constraints)
 http_solve(Json, Data) :-
     setting(api_url, Url),
+    setting(api_key, Key),
     atom_concat(Url, '/jobs', JobsUrl),
 
     http_post(
         JobsUrl,
         json(Json),
         json(Ls),
-        [headers(Headers)]),
+        [headers(Headers),
+         authorization(bearer(Key))]),
     member(status=Status, Ls),
     member(location(ResultsPath), Headers),
     write('job status: '), write(Status), nl,

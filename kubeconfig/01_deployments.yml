@@ -18,7 +18,7 @@ spec:
         - name: job-dispatcher
           image: registry.forge.hefr.ch/frederic.bapst/24-ps6-remote-clp/job_dispatcher:latest
           command: ["/wait-for-it.sh"]
-          args: ["rabbitmq:5672", "-t", "600", "--", "/wait-for-it.sh", "redis:6379", "-t", "600", "--", "/job_dispatcher"]
+          args: ["rabbitmq:5672", "-t", "600", "--", "/job_dispatcher"]
           env:
             - name: PORT
               value: "3000"
@@ -30,6 +30,16 @@ spec:
               value: "remote-clp-status"
             - name: REDIS_URL
               value: "redis:6379"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: remote-clp-jwt-secret
+                  key: secret
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: remote-clp-admin-password
+                  key: password
           ports:
             - containerPort: 3000
       imagePullSecrets:

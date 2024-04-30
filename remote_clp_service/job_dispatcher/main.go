@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
+	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -34,8 +37,16 @@ func getJobResponseCallback(jobResultMap *JobResultMap) func([]byte) {
 	return inner
 }
 
-func getAddJobHandler(connection *ConnectionWrapper, jobResultMap *JobResultMap) func(ctx *fiber.Ctx) error {
+func getAddJobHandler(connection *ConnectionWrapper, jobResultMap *JobResultMap, userUsageMap *UserUsageMap) func(ctx *fiber.Ctx) error {
 	inner := func(ctx *fiber.Ctx) error {
+		user := ctx.Locals("user").(*jwt.Token)
+		claims := user.Claims.(jwt.MapClaims)
+		username := claims["username"].(string)
+
+		userUsageMap.Increment(username)
+		usage, _ := userUsageMap.Usage(username)
+		log.Printf("User %s has used %d jobs", username, usage)
+
 		payload := new(Job)
 
 		if err := ctx.BodyParser(payload); err != nil {
@@ -81,34 +92,85 @@ func getResultsHandler(jobResultMap *JobResultMap) func(ctx *fiber.Ctx) error {
 	return inner
 }
 
-func StartServer(config *Config, connection *ConnectionWrapper, jobResultMap *JobResultMap) {
-	// Create a new Fiber instance.
+func getTokensHandler(config *Config) func(ctx *fiber.Ctx) error {
+	inner := func(ctx *fiber.Ctx) error {
+		fmt.Println("Received token request")
+		body := new(TokenRequest)
+
+		if err := ctx.BodyParser(body); err != nil {
+			return err
+		}
+
+		if body.TokenUsername == "" || body.TokenExpiry <= time.Now().Unix() {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid token request",
+			})
+		}
+
+		if body.AdminPassword != config.adminPassword {
+			return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Invalid password",
+			})
+		}
+
+		// Create the Claims
+		claims := jwt.MapClaims{
+			"username": body.TokenUsername,
+			"exp":      body.TokenExpiry,
+		}
+
+		// Create token
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+		// Generate encoded token and send it as response.
+		t, err := token.SignedString(config.jwtSecret)
+		if err != nil {
+			return ctx.SendStatus(fiber.StatusInternalServerError)
+		}
+
+		return ctx.JSON(fiber.Map{"token": t})
+	}
+
+	return inner
+}
+
+func StartServer(config *Config, connection *ConnectionWrapper, jobResultMap *JobResultMap, userUsageMap *UserUsageMap) {
+	// Create a new Fiber instance
 	app := fiber.New()
 
-	// Add middleware.
-	app.Use(
-		logger.New(), // add simple logger
-	)
+	// add simple logger
+	app.Use(logger.New())
 
-	// Add route.
-	app.Post("/jobs", getAddJobHandler(connection, jobResultMap))
+	// Add unauthenticated routes
+	app.Post("/tokens", getTokensHandler(config))
+
+	// add JWT middleware
+	app.Use(jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{Key: config.jwtSecret},
+	}))
+
+	// Add authenticated routes
+	app.Post("/jobs", getAddJobHandler(connection, jobResultMap, userUsageMap))
 
 	app.Get("/jobs/results/:id", getResultsHandler(jobResultMap))
 
-	// Start Fiber API server.
+	// Start Fiber API server
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", config.ApiPort)))
 }
 
 func main() {
-	// Load configuration.
+	// Set up logging
+	log.SetFlags(0)
+	log.SetOutput(new(logWriter))
+
+	// Load configuration
 	config := GetConfig()
 
-	ExampleClient(&config)
-
 	jobResultMap := JobResultMap{}
+	userUsageMap := UserUsageMap{}
 
 	connection := Connect(&config, getJobResponseCallback(&jobResultMap))
 	defer connection.Close()
 
-	StartServer(&config, &connection, &jobResultMap)
+	StartServer(&config, &connection, &jobResultMap, &userUsageMap)
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -17,6 +18,12 @@ type JobResponse struct {
 	Status JobStatus         `json:"status"`
 	Error  string            `json:"error"`
 	Data   *[]map[string]int `json:"data"`
+}
+
+type TokenRequest struct {
+	AdminPassword string `json:"admin_password"`
+	TokenUsername string `json:"token_username"`
+	TokenExpiry   int64  `json:"token_expiry"`
 }
 
 type JobStatus int
@@ -61,4 +68,26 @@ func (m *JobResultMap) Load(key uuid.UUID) (*JobResponse, bool) {
 
 func (m *JobResultMap) Store(key uuid.UUID, value *JobResponse) {
 	(*sync.Map)(m).Store(key, value)
+}
+
+type UserUsageMap sync.Map
+
+func (m *UserUsageMap) Usage(key string) (int, bool) {
+	value, ok := (*sync.Map)(m).Load(key)
+	if !ok {
+		return 0, false
+	}
+	return value.(int), true
+}
+
+func (m *UserUsageMap) Increment(key string) {
+	uses, _ := m.Usage(key)
+	(*sync.Map)(m).Store(key, uses+1)
+}
+
+type logWriter struct {
+}
+
+func (writer logWriter) Write(bytes []byte) (int, error) {
+	return fmt.Print(time.Now().UTC().Format("15:04:05") + " [INFO] " + string(bytes))
 }
