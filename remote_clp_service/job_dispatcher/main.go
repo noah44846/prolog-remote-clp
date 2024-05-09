@@ -22,13 +22,23 @@ func getJobResponseCallback(jobResultMap *JobResultMap) func([]byte) {
 			return
 		}
 
+		result, ok := jobResultMap.Load(resp.Id)
+		if !ok {
+			log.Println("Job not found", resp.Id)
+			return
+		}
+
 		switch resp.Status {
 		case JobStatusDone:
 			log.Println("Job completed:", resp.Id)
-			jobResultMap.Store(resp.Id, resp)
+
+			result.Status = JobStatusDone
+			result.Data = resp.Data
+			result.Error = resp.Error
 		case JobStatusInProgress:
 			log.Println("Job processing:", resp.Id)
-			jobResultMap.Store(resp.Id, resp)
+
+			result.Status = JobStatusInProgress
 		default:
 			log.Println("Invalid job state", resp.Id)
 		}

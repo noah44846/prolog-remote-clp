@@ -12,8 +12,8 @@ services:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
       - RABBITMQ_JOBS_QUEUE=remote-clp-jobs
       - RABBITMQ_STATUS_QUEUE=remote-clp-status
-      - JWT_SECRET=secret
-      - ADMIN_PASSWORD=secret
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
 
   worker:
     build: ./remote_clp_service/worker

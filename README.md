@@ -2,16 +2,20 @@
 
 ## Start locally
 
-* Install go v1.22.1 and python v3.11.8
-* Run `docker compose up rabbitmq -d`
-* Configure kubectl to have acces to the cluster (download the kubeconfig file from the rancher and set the KUBECONFIG environment variable to the path of the file or put it in ~/.kube/config)
-* Run `kubectl -n remote-clp create secret generic remote-clp-admin-password --from-literal=password=<admin_password>` to create the secret with the admin password for production
-* Run `kubectl -n remote-clp create secret generic remote-clp-jwt-secret --from-literal=secret=<jwt_secret>` to create the secret with the jwt secret for production
-* Run `pip install -r requirements.txt` in `/remote_clp_service/worker`
-* Run `go run main.go` in `/remote_clp_service/job_dispatcher`
-* Run `swipl` in `/remote_clp_client` to interact with the client
-    * `[remote_clp].` to load the client
+1. Install go v1.22.1 and python v3.11.8
+2. Run `docker compose up rabbitmq -d`
+3. Configure kubectl to have acces to the cluster (download the kubeconfig file from the rancher and set the KUBECONFIG environment variable to the path of the file or put it in ~/.kube/config)
+4. Run `kubectl -n remote-clp create secret generic remote-clp-admin-password --from-literal=password=<admin_password>` to create the secret with the admin password for production
+5. Run `kubectl -n remote-clp create secret generic remote-clp-jwt-secret --from-literal=secret=<jwt_secret>` to create the secret with the jwt secret for production
+6. Run (ideally in a virtual environment but not necessary) `pip install -r requirements.txt` in `/remote_clp_service/worker`
+7. Run `go run main.go` in `/remote_clp_service/job_dispatcher`
+8. Run `swipl -l ./remote_clp.pl` in `/remote_clp_client` to interact with the client
+    * Alternatively, you can use the example programs in `/remote_clp_client/examples` by running `swipl -l ./examples/<example_file>` in `/remote_clp_client`
 
 ## Run on docker
 
-* Run `docker compose up -d`
+1. Create a `.env` file in the root directory with the following content:
+    * `ADMIN_PASSWORD=<admin_password>`
+    * `JWT_SECRET=<jwt_secret>`
+2. Run `docker compose up -d`
+3. Follow the step 8 from the local setup
