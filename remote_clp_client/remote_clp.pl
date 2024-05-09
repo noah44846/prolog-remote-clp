@@ -45,7 +45,7 @@
 :- use_module(library(http/http_client)).
 :- use_module(library(http/http_json)).
 
-:- setting(api_url, atom, 'http://localhost:3000', 'URL of the remote CLP server').
+:- setting(api_url, atom, 'http://localhost:3000/api', 'URL of the remote CLP server').
 :- setting(api_key, atom, '', 'API key for the remote CLP server').
 
 :- initialization(nb_setval(constraints, [])).

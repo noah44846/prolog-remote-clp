@@ -157,8 +157,11 @@ func StartServer(config *Config, connection *ConnectionWrapper, jobResultMap *Jo
 	// add simple logger
 	app.Use(logger.New())
 
+	// Serve static files for admin UI
+	app.Static("/", "./static")
+
 	// Add unauthenticated routes
-	app.Post("/tokens", getTokensHandler(config))
+	app.Post("/api/tokens", getTokensHandler(config))
 
 	// add JWT middleware
 	app.Use(jwtware.New(jwtware.Config{
@@ -166,9 +169,9 @@ func StartServer(config *Config, connection *ConnectionWrapper, jobResultMap *Jo
 	}))
 
 	// Add authenticated routes
-	app.Post("/jobs", getAddJobHandler(connection, jobResultMap))
+	app.Post("/api/jobs", getAddJobHandler(connection, jobResultMap))
 
-	app.Get("/jobs/results/:id", getResultsHandler(jobResultMap))
+	app.Get("/api/jobs/results/:id", getResultsHandler(jobResultMap))
 
 	// Start Fiber API server
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", config.ApiPort)))
