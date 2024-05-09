@@ -8,6 +8,7 @@ In the SWI-Prolog console, you can use the following predicates to interact with
     * The remote CLP service URL is `http://localhost:3000`
     * Example for production deployment: `api_config([url('https://remote-clp.kube.isc.heia-fr.ch/api'), key('<some_jwt>')]).`
 * See the examples in `/remote_clp_client/examples` for more information on how to use the client.
+* There is a admin interface available at `http://localhost:3000/admin` to create tokens for the users.
 
 ## Start locally
 
