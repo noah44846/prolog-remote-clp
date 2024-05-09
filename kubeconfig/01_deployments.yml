@@ -27,9 +27,7 @@ spec:
             - name: RABBITMQ_JOBS_QUEUE
               value: "remote-clp-jobs"
             - name: RABBITMQ_STATUS_QUEUE
-              value: "remote-clp-status"
-            - name: REDIS_URL
-              value: "redis:6379"
+              value: "remote-clp-status" 
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

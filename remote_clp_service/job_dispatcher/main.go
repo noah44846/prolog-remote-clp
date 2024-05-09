@@ -37,15 +37,11 @@ func getJobResponseCallback(jobResultMap *JobResultMap) func([]byte) {
 	return inner
 }
 
-func getAddJobHandler(connection *ConnectionWrapper, jobResultMap *JobResultMap, userUsageMap *UserUsageMap) func(ctx *fiber.Ctx) error {
+func getAddJobHandler(connection *ConnectionWrapper, jobResultMap *JobResultMap) func(ctx *fiber.Ctx) error {
 	inner := func(ctx *fiber.Ctx) error {
 		user := ctx.Locals("user").(*jwt.Token)
 		claims := user.Claims.(jwt.MapClaims)
 		username := claims["username"].(string)
-
-		userUsageMap.Increment(username)
-		usage, _ := userUsageMap.Usage(username)
-		log.Printf("User %s has used %d jobs", username, usage)
 
 		payload := new(Job)
 
@@ -56,8 +52,9 @@ func getAddJobHandler(connection *ConnectionWrapper, jobResultMap *JobResultMap,
 		connection.PublishJob(ctx.Body())
 
 		jobResponse := JobResponse{
-			Id:     payload.Id,
-			Status: JobStatusInProgress,
+			Id:       payload.Id,
+			Status:   JobStatusInProgress,
+			Username: username,
 		}
 		jobResultMap.Store(payload.Id, &jobResponse)
 
@@ -72,6 +69,10 @@ func getAddJobHandler(connection *ConnectionWrapper, jobResultMap *JobResultMap,
 
 func getResultsHandler(jobResultMap *JobResultMap) func(ctx *fiber.Ctx) error {
 	inner := func(ctx *fiber.Ctx) error {
+		user := ctx.Locals("user").(*jwt.Token)
+		claims := user.Claims.(jwt.MapClaims)
+		username := claims["username"].(string)
+
 		id, err := uuid.Parse(ctx.Params("id"))
 		if err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -86,6 +87,12 @@ func getResultsHandler(jobResultMap *JobResultMap) func(ctx *fiber.Ctx) error {
 			})
 		}
 
+		if results.Username != username {
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Access denied",
+			})
+		}
+
 		return ctx.JSON(results)
 	}
 
@@ -94,7 +101,6 @@ func getResultsHandler(jobResultMap *JobResultMap) func(ctx *fiber.Ctx) error {
 
 func getTokensHandler(config *Config) func(ctx *fiber.Ctx) error {
 	inner := func(ctx *fiber.Ctx) error {
-		fmt.Println("Received token request")
 		body := new(TokenRequest)
 
 		if err := ctx.BodyParser(body); err != nil {
@@ -134,7 +140,7 @@ func getTokensHandler(config *Config) func(ctx *fiber.Ctx) error {
 	return inner
 }
 
-func StartServer(config *Config, connection *ConnectionWrapper, jobResultMap *JobResultMap, userUsageMap *UserUsageMap) {
+func StartServer(config *Config, connection *ConnectionWrapper, jobResultMap *JobResultMap) {
 	// Create a new Fiber instance
 	app := fiber.New()
 
@@ -150,7 +156,7 @@ func StartServer(config *Config, connection *ConnectionWrapper, jobResultMap *Jo
 	}))
 
 	// Add authenticated routes
-	app.Post("/jobs", getAddJobHandler(connection, jobResultMap, userUsageMap))
+	app.Post("/jobs", getAddJobHandler(connection, jobResultMap))
 
 	app.Get("/jobs/results/:id", getResultsHandler(jobResultMap))
 
@@ -167,10 +173,9 @@ func main() {
 	config := GetConfig()
 
 	jobResultMap := JobResultMap{}
-	userUsageMap := UserUsageMap{}
 
 	connection := Connect(&config, getJobResponseCallback(&jobResultMap))
 	defer connection.Close()
 
-	StartServer(&config, &connection, &jobResultMap, &userUsageMap)
+	StartServer(&config, &connection, &jobResultMap)
 }

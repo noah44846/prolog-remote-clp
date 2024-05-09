@@ -14,10 +14,11 @@ type Job struct {
 }
 
 type JobResponse struct {
-	Id     uuid.UUID         `json:"id"`
-	Status JobStatus         `json:"status"`
-	Error  string            `json:"error"`
-	Data   *[]map[string]int `json:"data"`
+	Id       uuid.UUID         `json:"id"`
+	Status   JobStatus         `json:"status"`
+	Error    string            `json:"error"`
+	Data     *[]map[string]int `json:"data"`
+	Username string            `json:"username"`
 }
 
 type TokenRequest struct {
@@ -68,21 +69,6 @@ func (m *JobResultMap) Load(key uuid.UUID) (*JobResponse, bool) {
 
 func (m *JobResultMap) Store(key uuid.UUID, value *JobResponse) {
 	(*sync.Map)(m).Store(key, value)
-}
-
-type UserUsageMap sync.Map
-
-func (m *UserUsageMap) Usage(key string) (int, bool) {
-	value, ok := (*sync.Map)(m).Load(key)
-	if !ok {
-		return 0, false
-	}
-	return value.(int), true
-}
-
-func (m *UserUsageMap) Increment(key string) {
-	uses, _ := m.Usage(key)
-	(*sync.Map)(m).Store(key, uses+1)
 }
 
 type logWriter struct {

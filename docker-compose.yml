@@ -5,7 +5,6 @@ services:
     entrypoint: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "/job_dispatcher"]
     depends_on:
       - rabbitmq
-      - redis
     ports:
       - 3000:3000
     environment:
