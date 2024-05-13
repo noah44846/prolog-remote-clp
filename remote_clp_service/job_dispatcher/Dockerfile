@@ -17,12 +17,17 @@ RUN go build -ldflags="-s -w" -o job_dispatcher .
 
 FROM bash
 
+WORKDIR app
+
 # Copy binary and config files from /build 
 # to root folder of scratch container.
-COPY --from=builder ["/build/job_dispatcher", "/"]
+COPY --from=builder ["/build/job_dispatcher", "/app"]
+
+# copy static folder 
+ADD static /app/static
 
 RUN wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
-RUN chmod +x /wait-for-it.sh
+RUN chmod +x wait-for-it.sh
 
 # Command to run when starting the container.
-ENTRYPOINT ["/job_dispatcher"]
+ENTRYPOINT ["job_dispatcher"]

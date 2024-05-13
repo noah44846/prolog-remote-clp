@@ -17,8 +17,8 @@ spec:
       containers:
         - name: job-dispatcher
           image: registry.forge.hefr.ch/frederic.bapst/24-ps6-remote-clp/job_dispatcher:latest
-          command: ["/wait-for-it.sh"]
-          args: ["rabbitmq:5672", "-t", "600", "--", "/job_dispatcher"]
+          command: ["/app/wait-for-it.sh"]
+          args: ["rabbitmq:5672", "-t", "600", "--", "/app/job_dispatcher"]
           env:
             - name: PORT
               value: "3000"

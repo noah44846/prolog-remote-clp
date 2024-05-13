@@ -2,7 +2,7 @@ services:
   job_dispatcher:
     build: ./remote_clp_service/job_dispatcher
     container_name: job_dispatcher
-    entrypoint: ["/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "/job_dispatcher"]
+    entrypoint: ["/app/wait-for-it.sh", "rabbitmq:5672", "-t", "600", "--", "/app/job_dispatcher"]
     depends_on:
       - rabbitmq
     ports:
