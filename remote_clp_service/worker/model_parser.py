@@ -10,7 +10,7 @@ class SolutionCallback(cp_model.CpSolverSolutionCallback):
     def __init__(self, variables: list[IntVar]):
         cp_model.CpSolverSolutionCallback.__init__(self)
         self.__variables = variables
-        self.json_dict: list[dict[str, int]] = []
+        self.__solutions: list[dict[str, int]] = []
         self.solution_count = 0
 
     def set_solution_limit(self, limit: int):
@@ -20,7 +20,7 @@ class SolutionCallback(cp_model.CpSolverSolutionCallback):
         res = {}
         for var in self.__variables:
             res[str(var)] = self.Value(var)
-        self.json_dict.append(res)
+        self.__solutions.append(res)
 
         self.solution_count += 1
         if hasattr(self, 'solution_limit') and self.solution_count >= self.solution_limit:
@@ -30,6 +30,14 @@ class SolutionCallback(cp_model.CpSolverSolutionCallback):
         res = {}
         for var in self.__variables:
             res[str(var)] = solver.Value(var)
+        return res
+
+    @property
+    def json_dict(self) -> list[dict[str, int]]:
+        res = []
+        for sol in self.__solutions:
+            if sol not in res:
+                res.append(sol)
         return res
 
 

@@ -273,13 +273,15 @@ labeling(Options, Vars) :-
 
     (Options = [] ->
         JsonAttrs1 = JsonAttrs ;
-        % TODO: rename to serialize
         (serialize_options(Options, OptionsJson), JsonAttrs1 = [options=OptionsJson|JsonAttrs])),
 
     Json = json(JsonAttrs1),
     http_solve(Json, Solutions),
 
     clear_constraints_for_vars(Vars),
+
+    length(Solutions, N),
+    write('Number of solutions: '), writeln(N),
 
     member(json(SolutionVars), Solutions),
     unify_solution(SolutionVars, Vars).
@@ -333,3 +335,4 @@ _ #\/ _ :- fail.
 _ #\ _ :- fail.
 _ #/\ _ :- fail.
 #\ _ :- fail.
+
