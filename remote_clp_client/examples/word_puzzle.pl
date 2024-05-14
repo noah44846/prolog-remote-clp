@@ -11,10 +11,10 @@ go(Ls) :-
     write('Time: '), writeln(Time.wall).
 
 
-solve_puzzle(LD) :-
-	LD = [A, B, C, _D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z],
-	LD ins 1..26,
-	all_different(LD),
+solve_puzzle(Ls) :-
+	Ls = [A, B, C, _D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z],
+	Ls ins 1..26,
+	all_different(Ls),
 	B + A + L + L + E + T #= 45,
 	C + E + L + L + O #= 43,
 	C + O + N + C + E + R + T #= 74,
@@ -35,5 +35,4 @@ solve_puzzle(LD) :-
 	T + H + E + M + E #= 72,
 	V + I + O + L + I + N #= 100,
 	W + A + L + T + Z #= 34,
-	label(LD).
-
+	label(Ls).

@@ -17,4 +17,3 @@ spec:
   tls:
     - hosts:
         - remote-clp.kube.isc.heia-fr.ch
-

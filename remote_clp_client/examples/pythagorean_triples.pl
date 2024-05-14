@@ -21,4 +21,3 @@ pyth_triplets(N,Ls1) :-
 
 unbreak_symmetry(A,B, A,B).
 unbreak_symmetry(A,B, B,A).
-

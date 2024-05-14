@@ -30,4 +30,3 @@ diag([Q|Qs], [D1|Ds1], [D2|Ds2], N) :-
     D2 #= Q - N,
     N1 is N + 1,
     diag(Qs, Ds1, Ds2, N1).
-

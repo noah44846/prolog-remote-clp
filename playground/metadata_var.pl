@@ -1,23 +1,7 @@
-module(rclp).
+:- module(remote-clp).
 
-:- op(760, yfx, ~#<==>).
-:- op(750, xfy, ~#==>).
-:- op(750, yfx, ~#<==).
-:- op(740, yfx, ~#\/).
-:- op(730, yfx, ~#\).
-:- op(720, yfx, ~#/\).
-:- op(710,  fy, ~#\).
-:- op(700, xfx, ~#>).
-:- op(700, xfx, ~#<).
-:- op(700, xfx, ~#>=).
-:- op(700, xfx, ~#=<).
-:- op(700, xfx, ~#=).
-:- op(700, xfx, ~#\=).
-% :- op(700, xfx, in).
-% :- op(700, xfx, ins).
-% :- op(450, xfx, ..). % should bind more tightly than \/
-% :- op(150, fx, #).
-
+% hook (callback) that is called when a variable is unified
+% these hooks are bound to the module so they don't interfere with other attributes
 attr_unify_hook(M, E) :- 
     writeln('Variable was unified with:'),
     write('value: '), writeln(E),
@@ -25,6 +9,7 @@ attr_unify_hook(M, E) :-
 
 define([], _).
 define([Var|Ls], N) :-
+    % add the rclp attribute to the variable with value N
     put_attr(Var, rclp, N),
     N1 is N + 1,
     define(Ls, N1).
@@ -34,6 +19,7 @@ define(Ls) :-
 
 solve([]).
 solve([Var|Ls]) :-
+    % get the rclp attribute from the variable
     get_attr(Var, rclp, N),
     writeln(N),
     solve(Ls).

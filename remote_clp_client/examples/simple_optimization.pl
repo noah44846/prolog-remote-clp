@@ -16,4 +16,3 @@ optimizeDemo(Ls) :-
     A+B #< 50,
     4*A-B #< 88,
     labeling([max(Z)], [A,B]).
-
