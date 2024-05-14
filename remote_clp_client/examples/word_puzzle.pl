@@ -5,7 +5,13 @@
 
 :- api_config([url('https://remote-clp.kube.isc.heia-fr.ch/api'), key('<jwt_token>')]).
 
-go(LD) :-
+
+go(Ls) :-
+    call_time(findall(Ls1, solve_puzzle(Ls1), Ls), Time),
+    write('Time: '), writeln(Time.wall).
+
+
+solve_puzzle(LD) :-
 	LD = [A, B, C, _D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z],
 	LD ins 1..26,
 	all_different(LD),

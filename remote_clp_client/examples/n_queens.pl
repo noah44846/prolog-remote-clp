@@ -1,7 +1,13 @@
-% :- use_module(library(clpfd)).
+%:- use_module(library(clpfd)).
 :- use_module('../remote_clp').
 
 :- api_config([url('https://remote-clp.kube.isc.heia-fr.ch/api'), key('<jwt_token>')]).
+
+
+go(Ls) :-
+    call_time(findall(Qs, n_queens(12, Qs), Ls), Time),
+    write('Time: '), writeln(Time.wall).
+
 
 n_queens(N, Qs) :-
     length(Qs, N),
