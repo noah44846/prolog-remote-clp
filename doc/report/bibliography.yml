@@ -1,17 +1,80 @@
-aiexplorer:
+spec_doc:
+  type: Report
+  title: Prolog remote constraint logic programming - Specification
+  date: 2024
+  author: Noah Godel
+  location: Fribourg, Switzerland
+  organization: HEIA-FR / HTA-FR
+  language: English
+  note: This document is in the appendix
+
+prev_proj:
+  type: Report
+  title: Alternative CLP Engines
+  date: 2022
+  author: Jordan Vésy
+  location: Fribourg, Switzerland
+  organization: HEIA-FR / HTA-FR
+
+swi_clpfd_web:
   type: Web
-  title: Google Gemini VS Chatgpt Le guide comparatif
-  date: 2024-02-21
-  author: AIExplorer
-  url: 
-    value: https://aiexplorer.io/guides-ia/google-gemini-vs-chatgpt-le-guide-comparatif/
-    date: 2024-02-28
-    
-frontend:
+  title: SWI-Prolog clpfd library
+  author: Markus Triska
+  url: https://www.swi-prolog.org/man/clpfd.html
+  date: 2024
+
+mathopt_web:
   type: Web
-  title: Best Frontend Frameworks for Web Development
-  date: 2024-01
-  author: Hiren Dhaduk
-  url:
-    value: https://www.simform.com/blog/best-frontend-frameworks/
-    date: 2024-03-07
+  title: Google OR-Tools MathOpt
+  author: Google
+  url: https://developers.google.com/optimization/math_opt
+  date: 2023
+
+word_puzzle_clp_code:
+  type: Web
+  title: Word puzzle CLP program provided as an example for the GNU Prolog CLP library
+  author: Daniel Diaz
+  url: https://github.com/maandree/gprolog/blob/master/examples/ExamplesFD/alpha.pl
+  date: 2009
+
+golang:
+  type: Web
+  title: A lightweight and fast systems programming language
+  author: Google
+  date: 2024
+  url: https://go.dev
+
+go_fiber:
+  type: Web
+  title: An Express-inspired web framework written in Go
+  author: József Sallai
+  date: 2024
+  url: https://gofiber.io
+
+rabbit_mq:
+  type: Web
+  title: A popular message broker often used for asynchronous message passing
+  author: Broadcom
+  date: 2024
+  url: https://www.rabbitmq.com
+
+python:
+  type: Web
+  title: A simple and popular interpreted programming language
+  author: Python Software Foundation
+  date: 2024
+  url: https://www.python.org
+
+claude_ai:
+  type: Web
+  title: An LLM based AI chat bot
+  author: Anthropic
+  date: 2024
+  url: https://claude.ai
+
+github_copilot:
+  type: Web
+  title: An AI based developer tool for code generation
+  author: Github
+  date: 2024
+  url: https://github.com/features/copilot
