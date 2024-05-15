@@ -78,3 +78,10 @@ github_copilot:
   author: Github
   date: 2024
   url: https://github.com/features/copilot
+
+jwt:
+  type: Web
+  title: A JSON based token standard for representing security claims 
+  author: auth0
+  date: 2024
+  url: https://jwt.io
