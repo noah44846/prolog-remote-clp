@@ -2,6 +2,8 @@ import os
 import sys
 import logging
 import json
+import threading
+import time
 from typing import NamedTuple, Optional
 from enum import Enum
 from uuid import UUID
@@ -9,6 +11,10 @@ from uuid import UUID
 from pika import BlockingConnection, URLParameters
 
 from model_parser import solve_job
+
+
+RABBITMQ_HEARTBEAT_INTERVAL = 180 # 3 minutes
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -24,7 +30,7 @@ class BrokerConfiguration(NamedTuple):
 
 
 def broker_configuration() -> BrokerConfiguration:
-    url = os.environ.get('RABBITMQ_URL', 'amqp://guest:guest@localhost:5672/')
+    url = os.environ.get('RABBITMQ_URL', f'amqp://guest:guest@localhost:5672/?heartbeat={RABBITMQ_HEARTBEAT_INTERVAL}')
     jobs_channel_name = os.environ.get(
         'RABBITMQ_JOBS_CHANNEL', 'remote-clp-jobs')
     status_channel_name = os.environ.get(
@@ -77,6 +83,15 @@ def on_job_received(ch, method, properties, body: bytes):
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
+def send_heartbeat(connection):
+    while True:
+        try:
+            connection.add_callback_threadsafe(lambda: connection.process_data_events(time_limit=1))
+        except Exception as e:
+            logger.warning(f"Error sending heartbeat: {e}")
+        time.sleep(RABBITMQ_HEARTBEAT_INTERVAL)
+
+
 def listen_for_tasks():
     connection = BlockingConnection(config.pika_config)
     channel = connection.channel()
@@ -88,6 +103,10 @@ def listen_for_tasks():
     channel.basic_consume(queue=config.jobs_channel_name,
                           on_message_callback=on_job_received)
     logger.debug(' [*] Waiting for messages. To exit press CTRL+C')
+
+    # Start the heartbeat thread
+    heartbeat_thread = threading.Thread(target=send_heartbeat, args=(connection,))
+    heartbeat_thread.start()
 
     try:
         channel.start_consuming()
