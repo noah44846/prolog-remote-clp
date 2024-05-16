@@ -29,3 +29,11 @@ In the SWI-Prolog console, you can use the following predicates to interact with
     * `JWT_SECRET=<jwt_secret>`
 2. Run `docker compose up -d`
 3. Follow the step 8 from the local setup
+
+## Run tests
+
+To run the tests on the example programs: 
+
+1. Add the token in the `api_config` predicate at the top of the file
+2. Run `swipl -g run_tests -t halt tests.pl` in `/remote_clp_client`
+

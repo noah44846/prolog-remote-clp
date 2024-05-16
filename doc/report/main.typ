@@ -12,6 +12,7 @@
 #import "lib/heiafr.typ": report, code_block
 #import "@preview/big-todo:0.2.0": *
 #import "@preview/tablex:0.0.8": tablex, hlinex, vlinex
+#import "@preview/cetz:0.2.2": canvas, plot
 
 #set text(region: "ch", lang: "en")
 
@@ -24,12 +25,12 @@
   ),
   (
     version: "0.2",
-    date: datetime(year: 2024, month: 05, day: 15),
+    date: datetime(year: 2024, month: 05, day: 12),
     changes: [Corrected some typos, added references and add design diagrams],
   ),
   (
     version: "1.0",
-    date: datetime(year: 2024, month: 05, day: 17),
+    date: datetime(year: 2024, month: 05, day: 16),
     changes: [Final version],
   ),
 )
@@ -87,7 +88,6 @@ This document is structured as follows.
 - _Analysis_: this section presents the constraints, exploration of different technologies and features and the technological choices.
 - _Design_: this section presents the design of the Prolog client library and the remote CLP service.
 - _Implementation_: this section presents the implementation of the Prolog client library and the remote CLP service.
-- _Results_: this section presents the challenges and the future work.
 - _Conclusion_: this section concludes the document.
 
 = Analysis
@@ -897,23 +897,96 @@ In this project, we have implemented a Prolog client library and a remote CLP se
 
 The client library works as expected and is able to solve the example programs that were presented in the previous section. The client library is able to solve the N-queens problem, the Pythagorean triplets problem, the optimization problem and the word puzzle. The client library is able to find the correct solutions for the problems and is able to handle multiple solutions.
 
-@tbl_performance_results shows the performance comparison between the SWI-Prolog CLPFD library and the Remote CLP service.
+@tbl_performance_results shows the performance comparison between the SWI-Prolog CLPFD library and the Remote CLP service. All the tests were run on the same machine with the same input data. The times are the average of 5 runs. The remote CLP service in production deployed on a Kubernetes cluster with 3 workers was used for the tests. To get the solver time on the worker itself takes, a line was added to the worker that logs `solver.WallTime()`. The client time is overall the time it takes to send the request to the server and receive the result.
 
 #figure(
   table(
-    columns: 3,
+    columns: 4,
     inset: 6pt,
     stroke: none,
-    align: (left, center, center),
-    table.header([*Problem*], [*CLPFD*], [*Remote CLP*]),
-    table.hline(stroke: 0.5pt),
-    table.vline(stroke: 0.5pt, x: 1),
-    "N-queens 8", "0.1s", "0.2s",
+    align: (left, center, center, center),
+    table.header([*Problem*], [*CLPFD*], table.cell(colspan: 2)[*Remote CLP*],
+                 [], [], [Client time], [Solver time]),
+    table.hline(stroke: 0.8pt),
+    table.vline(stroke: 0.8pt, x: 1),
+    table.vline(stroke: 0.3pt, x: 2),
+    "N-queens 4", "0.007s", "0.11s", "0.002s",
+    "N-queens 7", "0.017s", "0.13s", "0.016s",
+    "N-queens 8", "0.06s", "1.22s", "0.11s",
+    "N-queens 10", "1.11s", "1.45s", "0.99s",
+    "N-queens 12", "26.41s", "30.62", "15.09s",
+    "Pythagorean triplets up to 10", "0.002s", "0.11s", "0.009s",
+    "Pythagorean triplets up to 100", "0.25s", "1.17s", "0.14s",
+    "Pythagorean triplets up to 200", "1.72s", "1.18s", "0.3s",
+    "Pythagorean triplets up to 500", "10.95s", "1.21s", "0.95s",
+    "Pythagorean triplets up to 1000", "79.69s", "3.34s", "2.27s",
+    "Simple optimization", "0.008s", "0.11s", "0.009s",
+    "Word puzzle", "3.12s", "0.11s", "0.036s",
   ),
   caption: [Performance comparison between SWI-Prolog CLPFD and Remote CLP],
 ) <tbl_performance_results>
 
-// maybe add specific graphs for n_queens etc
+@img_n_queens_performance_graph shows the performance comparison of the N-queens problem between the SWI-Prolog CLPFD library and the Remote CLP service. The graph shows the time it takes to solve the N-queens problem for different values of N. We can see that the solver for the Remote CLP service is faster than the SWI-Prolog CLPFD library for larger values of N. But the Client time is slower than the SWI-Prolog CLPFD library for all values of N. This is due to the fact that the parsing of the results in the worker and then in the client is slow for big results. Since the N Queens problem has 14200 solutions for $n = 12$ that means that the JSON object for the result is very big.
+
+#figure(
+  canvas(length: 1cm, {
+  plot.plot(size: (8, 6),
+    x-tick-step: none,
+    x-min: 3, x-max: 13,
+    x-ticks: ((4, $4$), (7, $7$), (8, $8$), (10, $10$), (12, $12$)),
+    y-tick-step: none,
+    y-min: 0, y-max: 31,
+    y-ticks: ((0, $0$), (5, $5$), (10, $10$), (15, $15$), (20, $20$), (25, $25$), (30, $30$)),
+    legend: auto,
+    {
+      plot.add(
+        label: "CLPFD",
+        style: (stroke: red),
+        ((4, 0.007), (7, 0.017), (8, 0.06), (10, 1.11), (12, 26.41)))
+      plot.add(
+        label: "Client time",
+        style: (stroke: green),
+        ((4, 0.11), (7, 0.13), (8, 1.22), (10, 1.45), (12, 30.62)))
+      plot.add(
+        label: "Solver time",
+        style: (stroke: blue),
+        ((4, 0.002), (7, 0.016), (8, 0.11), (10, 0.99), (12, 15.09)))
+    })
+  }),
+  caption: [N-queens performance comparison],
+) <img_n_queens_performance_graph>
+
+@img_pyth_performance_graph shows the performance comparison of the Pythagorean triplets problem between the SWI-Prolog CLPFD library and the Remote CLP service. The graph shows the time it takes to solve the Pythagorean triplets problem for different values of N. We can see that the solver for the Remote CLP service is considerably faster than the SWI-Prolog CLPFD library for larger values of N. The Google OR-Tools CP-SAT solver is able to solve the problem in a fraction of the time that the SWI-Prolog CLPFD library takes. Here the solutions are also considerably smaller than for the N Queens problem, so the gab between solver time and client time is smaller.
+
+#figure(
+  canvas(length: 1cm, {
+  plot.plot(size: (8, 6),
+    x-tick-step: none,
+    x-min: 9, x-max: 1001,
+    x-ticks: ((10, $10$), (100, $100$), (200, $200$), (500, $500$), (1000, $1000$)),
+    y-tick-step: none,
+    y-min: 0, y-max: 80,
+    y-ticks: ((0, $0$), (20, $20$), (40, $40$), (60, $60$), (80, $80$)),
+    legend: auto,
+    {
+      plot.add(
+        label: "CLPFD",
+        style: (stroke: red),
+        ((10, 0.002), (100, 0.25), (200, 1.72), (500, 10.95), (1000, 79.69)))
+      plot.add(
+        label: "Client time",
+        style: (stroke: green),
+        ((10, 0.11), (100, 1.17), (200, 1.18), (500, 1.21), (1000, 3.34)))
+      plot.add(
+        label: "Solver time",
+        style: (stroke: blue),
+        ((10, 0.009), (100, 0.14), (200, 0.3), (500, 0.95), (1000, 2.27)))
+    })
+  }),
+  caption: [Pythagorean triplets performance comparison],
+) <img_pyth_performance_graph>
+
+Overall we can see that the client times only appear in steps since we poll the server every second. The solver times are more continuous since the solver itself logs the time it took to solve the problem. If this is a problem for the user, the polling time could be decreased to get more precise times. We can also see that the CP-SAT solver is overall faster than the SWI-Prolog CLPFD library.
 
 == Challenges
 
