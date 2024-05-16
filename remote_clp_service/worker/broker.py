@@ -61,11 +61,12 @@ def process_job(ch, job: dict):
     publish_status(ch, job_id, RclpJobStatus.IN_PROGRESS)
 
     try:
-        result = solve_job(job)
+        result, time = solve_job(job)
         publish_status(ch, job_id, RclpJobStatus.DONE, result)
         logger.debug(f' [X] Job done: {result}')
         logger.debug(f' [X] Job done: {len(result)} solutions')
         logger.debug(f' [X] Job done: id {job_id}')
+        logger.debug(f' [X] Job done: time {time}')
     except Exception as e:
         logger.error(f' [X] Job failed {job_id}')
         logger.exception(e)

@@ -234,7 +234,7 @@ def parse_model(json_data: dict) -> tuple[CpModel, CpSolver, SolutionCallback]:
     return model, solver, solution_callback
 
 
-def solve_job(json_data: dict) -> list[dict[str, int]]:
+def solve_job(json_data: dict) -> tuple[list[dict[str, int]], float]:
     model, solver, solution_callback = parse_model(json_data)
     status = solver.solve(model, solution_callback)
 
@@ -242,9 +242,9 @@ def solve_job(json_data: dict) -> list[dict[str, int]]:
         case cp_model.OPTIMAL | cp_model.FEASIBLE:
             # the callback can get multiple solutions but we only need the one with the best objective value
             if model.has_objective():
-                return [solution_callback.solution_from_solver(solver)]
+                return ([solution_callback.solution_from_solver(solver)], solver.WallTime())
 
-            return solution_callback.json_dict
+            return (solution_callback.json_dict, solver.WallTime())
         case cp_model.MODEL_INVALID:
             raise ValueError(f'Invalid model: {model.Validate()}')
         case _:
