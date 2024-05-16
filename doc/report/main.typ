@@ -2,8 +2,8 @@
 // Copyright © 2024 Haute école d'ingénierie et d'architecture de Fribourg
 // SPDX-License-Identifier: Apache-2.0
 // ---------------------------------------------------------------------------
-// Author : Jacques Supcik <jacques.supcik@hefr.ch>
-// Date   : 23 February 2024
+// Author : Noah Godel <noah.godel@edu.hefr.ch>
+// Date   : 10 March 2024
 // ---------------------------------------------------------------------------
 // Example of a student reports at the Haute école d'ingénierie et
 // d'architecture de Fribourg
@@ -635,7 +635,7 @@ The JSON object has the following structure:
 
 The result data structure that the server sends back to the client is a simple JSON array of objects. Each object represents a solution to the problem. The entries of the object are the variables UUIDs as keys and their values as values. In the case of an error, the server sends back a JSON object with the error message.
 
-== Testing strategy
+== Testing strategy <chp_testing>
 
 The testing strategy for the client library is to use the example programs that were presented in the previous section. These programs will be used to test the client library and ensure that it works as expected. Since this is an end to end test of the client library, it is difficult to automate it completely. The user must manually run the programs and check the results.
 
@@ -785,7 +785,37 @@ The JSON object that is received from the server is parsed and the variables are
 
 === Tests cases on example programs
 
-TODO
+The example programs that were presented in @chp_testing are used to test the client library. The client library is tested with the example programs to ensure that it works as expected. The tests are done manually by running the example programs and checking the results. @lst_prolog_test_case shows an example of a test case in Prolog. The output of the test case is shown in @lst_prolog_test_case_output.
+
+#figure(
+  code_block[```swi-prolog
+  :- use_module('./remote_clp').
+  :- api_config([url('https://remote-clp.kube.isc.heia-fr.ch/api'), key('<jwt_key>')]).
+
+  :- begin_tests(remote_clp_simple).
+
+  test(simple) :-
+      Ls = [A, B],
+      Ls ins 0..1,
+      A #< B,
+      label(Ls),
+      assertion(Ls == [0, 1]).
+
+  :- end_tests(remote_clp_simple).
+  ```],
+  caption: [Example of a test case in Prolog],
+) <lst_prolog_test_case>
+
+#figure(
+  code_block[```sh
+  $ swipl -g run_tests -t halt tests.pl 
+  [1/1] remote_clp_simple:simple ..
+  Warning: /home/noah/projects/24-ps6-remote-clp/remote_clp_client/tests.pl:6:
+  Warning:     PL-Unit: Test simple: Test succeeded with choicepoint
+  % test passed in 0.203 seconds (0.079 cpu)
+  ```],
+  caption: [Output of the test case],
+) <lst_prolog_test_case_output>
 
 == Kubernetes deployment
 
@@ -793,7 +823,7 @@ The remote CLP service is deployed on a Kubernetes cluster. The service is split
 
 === Gitlab CI/CD
 
-The deployment of the service is automated with Gitlab CI/CD. The CI/CD pipeline is defined in the `.gitlab-ci.yml` file. The pipeline consists of several stages: build and deploy. In the build stage, the Docker images are built and pushed to the Gitlab container registry of the project. In the deploy stage, the Kubernetes manifests are applied to the Kubernetes cluster.
+The deployment of the service is automated with Gitlab CI/CD. The CI/CD pipeline is defined in the `.gitlab-ci.yml` file. The pipeline consists of several stages: build and deploy. In the build stage, the Docker images are built and pushed to the Gitlab container registry of the project. In the deploy stage, the Kubernetes manifests are applied to the Kubernetes cluster. @lst_gitlab_ci_cd shows the CI/CD script.
 
 #figure(
   code_block[```yml
@@ -830,8 +860,8 @@ The deployment of the service is automated with Gitlab CI/CD. The CI/CD pipeline
       - kubectl -n remote-clp rollout restart deploy remote-clp-job-dispatcher remote-clp-worker
       - echo "Application successfully deployed."
   ```],
-  caption: [Example of arithmetic expressions in Google OR-Tools],
-) <lst_arith_jjexpr_or_tools>
+  caption: [Gitlab CI/CD script],
+) <lst_gitlab_ci_cd>
 
 === Docker compose for local testing
 
@@ -859,11 +889,31 @@ The message broker is deployed as a Kubernetes deployment with a single replica.
 
 Persistent volumes are used to store the data of the message broker. The persistent volumes are mounted to the `/var/lib/rabbitmq` and `/var/log/rabbitmq` directories of the container. The persistent volumes are defined in the Kubernetes manifest. The docker compose file for local testing also uses persistent volumes.
 
-= Results
-
 = Conclusion
 
 In this project, we have implemented a Prolog client library and a remote CLP service that allows the user to solve constraint programming problems with the Google OR-Tools library. The client library is easy to use and feels similar to other CLP libraries that are available in Prolog. The client library supports finite domain variables, arithmetic constraints (liner and non-linear ones) and all different constraints. The client library is tested with example programs that show how to use the library to solve different problems.
+
+== Results and performance
+
+The client library works as expected and is able to solve the example programs that were presented in the previous section. The client library is able to solve the N-queens problem, the Pythagorean triplets problem, the optimization problem and the word puzzle. The client library is able to find the correct solutions for the problems and is able to handle multiple solutions.
+
+@tbl_performance_results shows the performance comparison between the SWI-Prolog CLPFD library and the Remote CLP service.
+
+#figure(
+  table(
+    columns: 3,
+    inset: 6pt,
+    stroke: none,
+    align: (left, center, center),
+    table.header([*Problem*], [*CLPFD*], [*Remote CLP*]),
+    table.hline(stroke: 0.5pt),
+    table.vline(stroke: 0.5pt, x: 1),
+    "N-queens 8", "0.1s", "0.2s",
+  ),
+  caption: [Performance comparison between SWI-Prolog CLPFD and Remote CLP],
+) <tbl_performance_results>
+
+// maybe add specific graphs for n_queens etc
 
 == Challenges
 
@@ -918,6 +968,8 @@ Individual unit tests are easier to automate and provide more coverage of the co
 The job dispatcher could be extended to support rate limiting and user statistics. The job dispatcher could keep track of the number of requests that are sent by each user and limit the number of requests that a user can send in a given time period. The job dispatcher could also keep track of the number of requests that are solved by each user and provide statistics on the number of requests that are solved by each user.
 
 Right now the administration interface only allows the administrator to generate JWT tokens. The administration interface could be extended to allow the administrator to revoke tokens and view statistics on the number of requests that are sent and solved by each user. This could allow for detecting abusive usage (and revoke the tokens of these users) of the service and provide insights on the usage of the service.
+
+A better insight on the usage of the service could also be used to find bottlenecks in the service and improve the performance of the service. For example, the number of workers could be increased if the service is under heavy load.
 
 === Add support for GNU Prolog in the client library
 
